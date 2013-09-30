@@ -26,6 +26,7 @@ int main(){
   TEfficiency* hlt = (TEfficiency*)f2->Get("Eff2d");
   TH2F* mr_rsq;
 
+  /*
   TFile* in = new TFile("/Users/cmorgoth/Software/git/BkgPredictionDM/Bkg_Pred_from_Data_2D_ttMC.root");
   
   TH1F* tt_1D = (TH1F*)in->Get("tt_1D");
@@ -46,14 +47,14 @@ int main(){
   double dy_N = dy_1D->Integral();
   double z_N = z_1D->Integral();
   double w_N = w_1D->Integral();
+  */
   
-  
-  double xsec[24] = {2.4E-10,9.36E-10,1.06E-9,3.57E-9,4.7E-8,8.8E-8,5.76E-8,1.06E-7,6.4E-8,1.15E-7,6.44E-8,1.16E-7,6.42E-8,1.16E-7,6.43E-8,1.16E-7,9.74E-9,2.17E-8,2.06E-8,4.31E-8,1.68E-9,4.76E-9,5.3E-9,1.34E-8};
+  double xsec[5] = {1.0, 1.0, 1.0, 1.0, 1.0};
   std::ifstream mfile0("list_of_files_v2.list");
-  std::ofstream outfile("eff_table_normal_AlphaT0p6.tex");
+  std::ofstream outfile("eff_table_normal_QCD_R2_0p5_MR_200_No_Dphi.tex");
   
-  //outfile << "\\begin{table}[htdp]\n\\caption{default}\n\\begin{center}\n\\begin{tabular}{|c|c|}\n\\hline\n";
-
+  outfile << "\\begin{table}[htdp]\n\\caption{default}\n\\begin{center}\n\\begin{tabular}{|c|c|}\n\\hline\n";
+  
   std::string fname0;
   std::cout.precision(16);
   int xs_counter = 0;
@@ -95,16 +96,17 @@ int main(){
       mfile0 >> fname0;
       if(mfile0.eof())break;
       //std::cout << fname0 << std::endl;
-      int low_ = fname0.find("DMm");
-      int high_ = fname0.find("_testMC_0.root") - low_;
-
+      int low_ = fname0.find("_QCD_");
+      int high_ = fname0.find(".root") - low_;
+      
       std::string dm_sample = fname0.substr(low_,high_);
-
+      
       TFile* f = new TFile(fname0.c_str());
       TTree* eff = (TTree*)f->Get("effTree");
       TTree* out = (TTree*)f->Get("outTree");
       
-      double mr[4], rsq[4], Jet_PT[20], Jet_Eta[20], Jet_Phi[20], Npassed_In, phiHem1, phiHem2, metCorrX[4], metCorrY[4];
+      double mr[4], rsq[4], Jet_PT[20], Jet_Eta[20], Jet_Phi[20], Npassed_In, metCorrX[4], metCorrY[4];
+      double pTHem1, pTHem2, etaHem1, etaHem2, phiHem1, phiHem2;
       int btag, box, N_Jets;
       
       eff->SetBranchStatus("*", 0);
@@ -130,6 +132,10 @@ int main(){
       out->SetBranchStatus("Jet_PT",1);
       out->SetBranchStatus("Jet_Phi",1);
       out->SetBranchStatus("Jet_Eta",1);
+      out->SetBranchStatus("pTHem1",1);
+      out->SetBranchStatus("pTHem2",1);
+      out->SetBranchStatus("etaHem1",1);
+      out->SetBranchStatus("etaHem2",1);
       out->SetBranchStatus("phiHem1",1);
       out->SetBranchStatus("phiHem2",1);
       out->SetBranchStatus("metCorrX",1);
@@ -142,6 +148,10 @@ int main(){
       out->SetBranchAddress("Jet_PT", Jet_PT);
       out->SetBranchAddress("Jet_Phi", Jet_Phi);
       out->SetBranchAddress("Jet_Eta", Jet_Eta);
+      out->SetBranchAddress("pTHem1", &pTHem1);
+      out->SetBranchAddress("pTHem2", &pTHem2);
+      out->SetBranchAddress("etaHem1", &etaHem1);
+      out->SetBranchAddress("etaHem2", &etaHem2);
       out->SetBranchAddress("phiHem1", &phiHem1);
       out->SetBranchAddress("phiHem2", &phiHem2);
       out->SetBranchAddress("metCorrX", metCorrX);
@@ -172,10 +182,11 @@ int main(){
       double Lumi = 19.6;
       //double xsec = 1;
       //double scaleF = Lumi*xsec[xs_counter]*1000./Gen_Evts;
-      double scaleF = Lumi*1000./Gen_Evts;
-      std::cout << dm_sample << " " << xsec[xs_counter] << std::endl;
+      //double scaleF = Lumi*1000./Gen_Evts;
+      double scaleF = 1;
+      //std::cout << dm_sample << " " << xsec[xs_counter] << std::endl;
       
-      std::cout << "scaleF : " << scaleF << std::endl;
+      //std::cout << "scaleF : " << scaleF << std::endl;
       
       TString dmsampleTS = dm_sample.c_str();
       TString met_dphi_name = dm_sample.c_str();
@@ -199,10 +210,10 @@ int main(){
       h_met_alphaT[xs_counter] = new TH2F(met_alphaT_name, met_alphaT_name, 100, -0.2, 5, 100, 0.0, 1500.);
       h_alpha[xs_counter] = new TH1F(met_alpha_name+"_1d", met_alpha_name+"_1d", 100, -0.2, 5);
       h_alphaT[xs_counter] = new TH1F(met_alphaT_name+"_1d", met_alphaT_name+"_1d", 100, -0.2, 5);
-      h_r2[xs_counter] = new TH1F("r2", "r2",100, 0.0, 2.5);
-      h_met[xs_counter] = new TH1F("r2", "r2",100, 0.0, 1500.);
-      h_theta[xs_counter] = new TH1F("theta", "theta", 100, -TMath::TwoPi(), TMath::TwoPi());
-      h_Dphi[xs_counter] = new TH1F("Dphi", "Dphi", 100, -TMath::TwoPi(), TMath::TwoPi());
+      h_r2[xs_counter] = new TH1F(dmsampleTS+"_r2", dmsampleTS+"_r2",100, 0.0, 2.5);
+      h_met[xs_counter] = new TH1F(dmsampleTS+"_met", dmsampleTS+"_met",100, 0.0, 1500.);
+      h_theta[xs_counter] = new TH1F(dmsampleTS+"_theta", dmsampleTS+"_theta", 100, 0, TMath::Pi());
+      h_Dphi[xs_counter] = new TH1F(dmsampleTS+"_Dphi", dmsampleTS+"_Dphi", 100, -TMath::Pi(), TMath::Pi());
 
       //Boosted Histos
       h_met_deltaPhi_B[xs_counter] = new TH2F(met_dphi_name+"_B", met_dphi_name+"_B", 100, -TMath::Pi(), TMath::Pi(), 100, 0.0, 1500);
@@ -213,11 +224,11 @@ int main(){
       h_met_alphaT_B[xs_counter] = new TH2F(met_alphaT_name+"_B", met_alphaT_name+"_B", 100, -0.2, 5, 100, 0.0, 1500.);
       h_alpha_B[xs_counter] = new TH1F(met_alpha_name+"_B"+"_1d", met_alpha_name+"_B"+"_1d", 100, -0.2, 5);
       h_alphaT_B[xs_counter] = new TH1F(met_alphaT_name+"_B"+"_1d", met_alphaT_name+"_B"+"_1d", 100, -0.2, 5);
-      h_r2_B[xs_counter] = new TH1F("r2_B", "r2_B",100, 0.0, 2.5);
-      h_met_B[xs_counter] = new TH1F("met_B", "met_B",100, 0.0, 1500.);
-      h_theta_B[xs_counter] = new TH1F("theta_B", "theta_B", 100, -TMath::TwoPi(), TMath::TwoPi());
-      h_Dphi_B[xs_counter] = new TH1F("Dphi_B", "Dphi_B", 100, -TMath::TwoPi(), TMath::TwoPi());
-      h_beta_r[xs_counter] = new TH1F("beta_r", "beta_r", 200, -20, 20);
+      h_r2_B[xs_counter] = new TH1F(dmsampleTS+"_r2_B", dmsampleTS+"_r2_B",100, 0.0, 2.5);
+      h_met_B[xs_counter] = new TH1F(dmsampleTS+"_met_B", dmsampleTS+"_met_B",100, 0.0, 1500.);
+      h_theta_B[xs_counter] = new TH1F(dmsampleTS+"_theta_B", dmsampleTS+"_theta_B", 100, 0, TMath::Pi());
+      h_Dphi_B[xs_counter] = new TH1F(dmsampleTS+"_Dphi_B", dmsampleTS+"_Dphi_B", 100, -TMath::Pi(), TMath::Pi());
+      h_beta_r[xs_counter] = new TH1F(dmsampleTS+"_beta_r", dmsampleTS+"_beta_r", 200, -1.5, 1.5);
       
       double N_passed = 0.0;
       for(int j = 0; j < N_out; j++){
@@ -230,8 +241,10 @@ int main(){
 	TLorentzVector j2;
 	TLorentzVector sumJ;
 	
-	j1.SetPtEtaPhiE(Jet_PT[0], Jet_Eta[0], Jet_Phi[0], Jet_PT[0]*cosh(Jet_Eta[0]));
-	j2.SetPtEtaPhiE(Jet_PT[1], Jet_Eta[1], Jet_Phi[1], Jet_PT[1]*cosh(Jet_Eta[1]));
+	//j1.SetPtEtaPhiE(Jet_PT[0], Jet_Eta[0], Jet_Phi[0], Jet_PT[0]*cosh(Jet_Eta[0]));
+	//j2.SetPtEtaPhiE(Jet_PT[1], Jet_Eta[1], Jet_Phi[1], Jet_PT[1]*cosh(Jet_Eta[1]));
+	j1.SetPtEtaPhiE(pTHem1, etaHem1, phiHem1, pTHem1*cosh(etaHem1));//Hemisphere
+        j2.SetPtEtaPhiE(pTHem2, etaHem2, phiHem2, pTHem2*cosh(etaHem2));//Hemisphere
 	
 	sumJ = j1+j2;
 	double Mt = sumJ.Mt();
@@ -274,7 +287,9 @@ int main(){
 	j1_B.Boost(0.0, 0.0, -beta_L);
 	j2_B.Boost(0.0, 0.0, -beta_L);
 	
-	std::cout << "============beta: " << beta_L << " beta_R_Mag: "<< beta_R_Mag << " ==============="<<std::endl;
+	j1_B.Boost(-beta_R_Mag*beta_T_Star_X, -beta_R_Mag*beta_T_Star_Y, 0.0);
+	j2_B.Boost(beta_R_Mag*beta_T_Star_X, beta_R_Mag*beta_T_Star_Y, 0.0);
+	//std::cout << "============beta: " << beta_L << " beta_R_Mag: "<< beta_R_Mag << " ==============="<<std::endl;
 	//std::cout << "j1.E: " << j1.E() << " j1.Px: " << j1.Px() << " j2.Py: " << j1.Py() << " j1.Pz: " << j1.Pz() << std::endl;
 	//std::cout << "j1_B.E: " << j1_B.E() << " j1_B.Px: " << j1_B.Px() << " j2.Py: " << j1_B.Py() << " j1_B.Pz: " << j1_B.Pz() << std::endl;
 
@@ -307,7 +322,7 @@ int main(){
 	
 	//if( mr[2]*rsq[2] > 100 && mr[2] > 200 && btag == 0 && box == 0 /*&& deltaPhi < 2.5*/)mr_rsq->Fill(mr[2], rsq[2], hlt_w);
 	//if(mr[2] > 200.0 && rsq[2] > 0.5 && btag == 0 && box == 0 && fabs(Dphi) < 2.5){
-	if(btag == 0 && box == 0 && alphaT > 0.6){
+	if(btag == 0 && box == 0 && mr[2] > 200. && rsq[2] > 0.5 ){
 	  //mr_rsq->Fill(mr[2], rsq[2], hlt_w);
 	  h_2d[xs_counter]->Fill(mr[2], rsq[2], hlt_w*scaleF);
 	  N_passed++;
@@ -329,7 +344,9 @@ int main(){
       }
       
       ca->cd();
+      gPad->SetLogy(0);
       h_met_deltaPhi[xs_counter]->Draw("colz");
+      gPad->SetLogy(0);
       ca->SaveAs("Plots/Dphi/"+met_dphi_name+".pdf");
       ca->SaveAs("Plots/Dphi/"+met_dphi_name+".png");
       
@@ -337,11 +354,15 @@ int main(){
       ca->SaveAs("Plots/Dphi/"+r2_dphi_name+".pdf");
       ca->SaveAs("Plots/Dphi/"+r2_dphi_name+".png");
 
+      
       h_Dphi[xs_counter]->Draw("");
+      gPad->SetLogy(1);
       ca->SaveAs("Plots/Dphi/"+dmsampleTS+"_Dphi_1d.pdf");
       ca->SaveAs("Plots/Dphi/"+dmsampleTS+"_Dphi_1d.png");
-      
+
+      gPad->SetLogy(0);
       h_r2_alpha[xs_counter]->Draw("colz");
+      gPad->SetLogy(0);
       ca->SaveAs("Plots/alpha/"+r2_alpha_name+".pdf");
       ca->SaveAs("Plots/alpha/"+r2_alpha_name+".png");
       
@@ -358,20 +379,25 @@ int main(){
       ca->SaveAs("Plots/alpha/"+met_alphaT_name+".png");
 
       h_alpha[xs_counter]->Draw();
+      gPad->SetLogy(1);
       ca->SaveAs("Plots/alpha/"+dmsampleTS+"_alpha_1d.pdf");
       ca->SaveAs("Plots/alpha/"+dmsampleTS+"_alpha_1d.png");
+      
       
       h_alphaT[xs_counter]->Draw();
       ca->SaveAs("Plots/alpha/"+dmsampleTS+"_alphaT_1d.pdf");
       ca->SaveAs("Plots/alpha/"+dmsampleTS+"_alphaT_1d.png");
       
+      
       h_r2[xs_counter]->Draw();
       ca->SaveAs("Plots/R2/"+dmsampleTS+"_r2_1d.pdf");
       ca->SaveAs("Plots/R2/"+dmsampleTS+"_r2_1d.png");
       
+      
       h_met[xs_counter]->Draw();
       ca->SaveAs("Plots/met/"+dmsampleTS+"_met_1d.pdf");
       ca->SaveAs("Plots/met/"+dmsampleTS+"_met_1d.png");
+      
       
       h_theta[xs_counter]->Draw();
       ca->SaveAs("Plots/theta/"+dmsampleTS+"_theta_1d.pdf");
@@ -381,6 +407,7 @@ int main(){
       //Boosted Histos
       ////////////////////////
       
+      
       h_beta_r[xs_counter]->Draw();
       ca->SaveAs("Plots/Boost/"+dmsampleTS+"_beta_r_1d.pdf");
       ca->SaveAs("Plots/Boost/"+dmsampleTS+"_beta_r_1d.png");
@@ -389,7 +416,9 @@ int main(){
       ca->SaveAs("Plots/theta/"+dmsampleTS+"_theta_1d_B.pdf");
       ca->SaveAs("Plots/theta/"+dmsampleTS+"_theta_1d_B.png");
 
+      gPad->SetLogy(0);
       h_met_deltaPhi_B[xs_counter]->Draw("colz");
+      gPad->SetLogy(0);
       ca->SaveAs("Plots/Dphi/"+met_dphi_name+"_B.pdf");
       ca->SaveAs("Plots/Dphi/"+met_dphi_name+"_B.png");
       
@@ -397,11 +426,15 @@ int main(){
       ca->SaveAs("Plots/Dphi/"+r2_dphi_name+"_B.pdf");
       ca->SaveAs("Plots/Dphi/"+r2_dphi_name+"_B.png");
 
+      gPad->SetLogy();
       h_Dphi_B[xs_counter]->Draw("");
+      gPad->SetLogy();
       ca->SaveAs("Plots/Dphi/"+dmsampleTS+"_Dphi_1d_B.pdf");
       ca->SaveAs("Plots/Dphi/"+dmsampleTS+"_Dphi_1d_B.png");
       
+      gPad->SetLogy(0);
       h_r2_alpha_B[xs_counter]->Draw("colz");
+      gPad->SetLogy(0);
       ca->SaveAs("Plots/alpha/"+r2_alpha_name+"_B.pdf");
       ca->SaveAs("Plots/alpha/"+r2_alpha_name+"_B.png");
       
@@ -417,7 +450,9 @@ int main(){
       ca->SaveAs("Plots/alpha/"+met_alphaT_name+"_B.pdf");
       ca->SaveAs("Plots/alpha/"+met_alphaT_name+"_B.png");
 
+      gPad->SetLogy();
       h_alpha_B[xs_counter]->Draw();
+      gPad->SetLogy();
       ca->SaveAs("Plots/alpha/"+dmsampleTS+"_alpha_1d_B.pdf");
       ca->SaveAs("Plots/alpha/"+dmsampleTS+"_alpha_1d_B.png");
       
@@ -428,9 +463,9 @@ int main(){
       double sample_eff = N_passed/Gen_Evts;
       
       std::cout << "Sample Eff: " << sample_eff*100 << "%" <<std::endl;
-      //outfile << dm_sample << " & " << sample_eff*100 << "\\%" << "\\" << "\\" << "\n";
-      //outfile << "\\hline" << std::endl;
-      outfile << dm_sample << " " << sample_eff*100 << "\n";
+      outfile << dm_sample << " & " << sample_eff*100 << "\\%" << "\\" << "\\" << "\n";
+      outfile << "\\hline" << std::endl;
+      //outfile << dm_sample << " " << sample_eff*100 << "\n";
       
       TString s = h_2d[xs_counter]->GetName();
       s = s+"_combine.root";
@@ -441,12 +476,12 @@ int main(){
       data_card_f << "------------------------------------------------------------------------------------------\n";
       data_card_f << "shapes * *\t" << s << "\t\t$PROCESS\t$PROCESS_$SYSTEMATIC\n";
       data_card_f << "------------------------------------------------------------------------------------------\n";
-      data_card_f << "Observation\t" << data_obs->Integral() << "\n";
+      data_card_f << "Observation\t" << /*data_obs->Integral() << */"\n";
       data_card_f << "------------------------------------------------------------------------------------------\n";
       data_card_f << "bin\t\tb1\t\tb1\t\tb1\t\tb1\t\tb1\n";
       data_card_f << "process\t\tsignal_1D\ttt_1D\t\tdy_1D\t\tz_1D\t\tw_1D\n";
       data_card_f << "process\t\t0\t\t1\t\t2\t\t3\t\t4\n";
-      data_card_f << "rate\t\t"<< h_2d[xs_counter]->Integral() <<"\t\t"<< tt_N <<"\t\t" << dy_N << "\t\t" << z_N << "\t\t" << w_N << "\n";
+      data_card_f << "rate\t\t"<< h_2d[xs_counter]->Integral() <<"\t\t"<< /*tt_N <<"\t\t" << dy_N << "\t\t" << z_N << "\t\t" << w_N <<*/ "\n";
       data_card_f << "------------------------------------------------------------------------------------------\n";
       data_card_f << "lumi\tlnN\t1.026\t\t1.0\t\t1.0\t\t1.0\t\t1.0\n";
       data_card_f << "alpha\tshape\t1\t\t-\t\t-\t\t-\t\t-\n";
@@ -464,7 +499,8 @@ int main(){
   }else{
     std::cout << "Unable to open the file" << std::endl;
   }
-  //outfile << "\\end{tabular}\n\\end{center}\n\\label{default}\n\\end{table}\n";
+  mfile0.close();
+  outfile << "\\end{tabular}\n\\end{center}\n\\label{default}\n\\end{table}\n";
   outfile.close();
   
   /*
@@ -485,7 +521,8 @@ int main(){
   TH1F* data_obs = (TH1F*)in->Get("data_obs");
   */
   TFile* n_f[24];
-  
+
+  /*
   for(int k = 0; k < 13; k++){
     TString s = h_2d[k]->GetName();
     s = s+"_combine.root";
@@ -516,6 +553,7 @@ int main(){
     w_1D_alphaDown->Write("w_1D_zetaDown");
     n_f[k]->Close();
   }
+  */
   /*
   tt_1D->Write();
   tt_1D_alphaUp->Write();
