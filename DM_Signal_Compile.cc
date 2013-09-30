@@ -26,7 +26,7 @@ int main(){
   TEfficiency* hlt = (TEfficiency*)f2->Get("Eff2d");
   TH2F* mr_rsq;
 
-  /*
+  
   TFile* in = new TFile("/Users/cmorgoth/Software/git/BkgPredictionDM/Bkg_Pred_from_Data_2D_ttMC.root");
   
   TH1F* tt_1D = (TH1F*)in->Get("tt_1D");
@@ -47,9 +47,9 @@ int main(){
   double dy_N = dy_1D->Integral();
   double z_N = z_1D->Integral();
   double w_N = w_1D->Integral();
-  */
   
-  double xsec[5] = {1.0, 1.0, 1.0, 1.0, 1.0};
+  
+  //double xsec[5] = {1.0, 1.0, 1.0, 1.0, 1.0};
   std::ifstream mfile0("list_of_files_v2.list");
   std::ofstream outfile("eff_table_normal_QCD_R2_0p5_MR_200_No_Dphi.tex");
   
@@ -95,9 +95,9 @@ int main(){
     while ( mfile0.good() ){
       mfile0 >> fname0;
       if(mfile0.eof())break;
-      //std::cout << fname0 << std::endl;
-      int low_ = fname0.find("_QCD_");
-      int high_ = fname0.find(".root") - low_;
+      std::cout << fname0 << std::endl;
+      int low_ = fname0.find("DMm");
+      int high_ = fname0.find("_testMC_0.root") - low_;
       
       std::string dm_sample = fname0.substr(low_,high_);
       
@@ -121,7 +121,7 @@ int main(){
 	Gen_Evts += Npassed_In;
       }
       
-      //std::cout << "Gen_Events: " << Gen_Evts << std::endl;
+      std::cout << "Gen_Events: " << Gen_Evts << std::endl;
       
       out->SetBranchStatus("*", 0);
       out->SetBranchStatus("MR", 1);
@@ -234,9 +234,7 @@ int main(){
       for(int j = 0; j < N_out; j++){
 	out->GetEntry(j);
 	double hlt_w = HLTscale(mr[2], rsq[2], hlt);
-	//double deltaPhi = fabs(phiHem1-phiHem2);
-	//double deltaPhi = Jet_Phi[0]-Jet_Phi[1];
-	//if(Jet_Phi[0] > Jet_Phi[1])deltaPhi += TMath::TwoPi();
+	
 	TLorentzVector j1;
 	TLorentzVector j2;
 	TLorentzVector sumJ;
@@ -476,12 +474,12 @@ int main(){
       data_card_f << "------------------------------------------------------------------------------------------\n";
       data_card_f << "shapes * *\t" << s << "\t\t$PROCESS\t$PROCESS_$SYSTEMATIC\n";
       data_card_f << "------------------------------------------------------------------------------------------\n";
-      data_card_f << "Observation\t" << /*data_obs->Integral() << */"\n";
+      data_card_f << "Observation\t" << data_obs->Integral() << "\n";
       data_card_f << "------------------------------------------------------------------------------------------\n";
       data_card_f << "bin\t\tb1\t\tb1\t\tb1\t\tb1\t\tb1\n";
       data_card_f << "process\t\tsignal_1D\ttt_1D\t\tdy_1D\t\tz_1D\t\tw_1D\n";
       data_card_f << "process\t\t0\t\t1\t\t2\t\t3\t\t4\n";
-      data_card_f << "rate\t\t"<< h_2d[xs_counter]->Integral() <<"\t\t"<< /*tt_N <<"\t\t" << dy_N << "\t\t" << z_N << "\t\t" << w_N <<*/ "\n";
+      data_card_f << "rate\t\t"<< h_2d[xs_counter]->Integral() <<"\t\t"<< tt_N <<"\t\t" << dy_N << "\t\t" << z_N << "\t\t" << w_N << "\n";
       data_card_f << "------------------------------------------------------------------------------------------\n";
       data_card_f << "lumi\tlnN\t1.026\t\t1.0\t\t1.0\t\t1.0\t\t1.0\n";
       data_card_f << "alpha\tshape\t1\t\t-\t\t-\t\t-\t\t-\n";
@@ -503,26 +501,9 @@ int main(){
   outfile << "\\end{tabular}\n\\end{center}\n\\label{default}\n\\end{table}\n";
   outfile.close();
   
-  /*
-  TFile* in = new TFile("/Users/cmorgoth/Software/git/BkgPredictionDM/Bkg_Pred_from_Data_2D_ttMC.root");
   
-  TH1F* tt_1D = (TH1F*)in->Get("tt_1D");
-  TH1F* tt_1D_alphaUp = (TH1F*)in->Get("tt_1D_alphaUp");
-  TH1F* tt_1D_alphaDown = (TH1F*)in->Get("tt_1D_alphaDown");
-  TH1F* z_1D = (TH1F*)in->Get("z_1D");
-  TH1F* z_1D_alphaUp = (TH1F*)in->Get("z_1D_alphaUp");
-  TH1F* z_1D_alphaDown = (TH1F*)in->Get("z_1D_alphaDown");
-  TH1F* dy_1D = (TH1F*)in->Get("dy_1D");
-  TH1F* dy_1D_alphaUp = (TH1F*)in->Get("dy_1D_alphaUp");
-  TH1F* dy_1D_alphaDown = (TH1F*)in->Get("dy_1D_alphaDown");
-  TH1F* w_1D = (TH1F*)in->Get("w_1D");
-  TH1F* w_1D_alphaUp = (TH1F*)in->Get("w_1D_alphaUp");
-  TH1F* w_1D_alphaDown = (TH1F*)in->Get("w_1D_alphaDown");
-  TH1F* data_obs = (TH1F*)in->Get("data_obs");
-  */
   TFile* n_f[24];
-
-  /*
+  
   for(int k = 0; k < 13; k++){
     TString s = h_2d[k]->GetName();
     s = s+"_combine.root";
@@ -553,25 +534,6 @@ int main(){
     w_1D_alphaDown->Write("w_1D_zetaDown");
     n_f[k]->Close();
   }
-  */
-  /*
-  tt_1D->Write();
-  tt_1D_alphaUp->Write();
-  tt_1D_alphaDown->Write();
-  
-  dy_1D->Write();
-  dy_1D_alphaUp->Write();
-  dy_1D_alphaDown->Write();
-  
-  z_1D->Write();
-  z_1D_alphaUp->Write();
-  z_1D_alphaDown->Write();
-  
-  w_1D->Write();
-  w_1D_alphaUp->Write();
-  w_1D_alphaDown->Write();
-  */
-  //n_f->Close();
   
   return 0;
 }
