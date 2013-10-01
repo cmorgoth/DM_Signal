@@ -51,7 +51,7 @@ int main(){
   
   //double xsec[5] = {1.0, 1.0, 1.0, 1.0, 1.0};
   std::ifstream mfile0("list_of_files_v2.list");
-  std::ofstream outfile("eff_table_normal_QCD_R2_0p5_MR_200_No_Dphi.tex");
+  std::ofstream outfile("eff_table_normal_R2_0p5_MR_200_Dphi_B_2p5.tex");
   
   outfile << "\\begin{table}[htdp]\n\\caption{default}\n\\begin{center}\n\\begin{tabular}{|c|c|}\n\\hline\n";
   
@@ -247,8 +247,8 @@ int main(){
 	sumJ = j1+j2;
 	double Mt = sumJ.Mt();
 	double Minv = sumJ.M();
-	double alpha = j2.E()/Minv;
-	double alphaT = j2.E()/Mt;
+	double alpha = j2.Pt()/Minv;
+	double alphaT = j2.Pt()/Mt;
 	double Dphi = j1.DeltaPhi(j2);
 	double Dtheta = j1.Angle(j2.Vect());
 	//std::cout << "PhiJ1: " << Jet_Phi[0] << " PhiJ1: " << Jet_Phi[1] <<  " normal: " << deltaPhi << " vector: " << Dphi << std::endl;
@@ -298,8 +298,8 @@ int main(){
 	sumJB = j1_B+j2_B;
 	double Mt_B = sumJB.Mt();
 	double Minv_B = sumJB.M();
-	double alpha_B = j2_B.E()/Minv_B;
-	double alphaT_B = j2_B.E()/Mt_B;
+	double alpha_B = j2_B.Pt()/Minv_B;
+	double alphaT_B = j2_B.Pt()/Mt_B;
 	double Dphi_B = j1_B.DeltaPhi(j2_B);
 	double Dtheta_B = j1_B.Angle(j2_B.Vect());
 	//Filling Boosted Histos
@@ -320,10 +320,10 @@ int main(){
 	
 	//if( mr[2]*rsq[2] > 100 && mr[2] > 200 && btag == 0 && box == 0 /*&& deltaPhi < 2.5*/)mr_rsq->Fill(mr[2], rsq[2], hlt_w);
 	//if(mr[2] > 200.0 && rsq[2] > 0.5 && btag == 0 && box == 0 && fabs(Dphi) < 2.5){
-	if(btag == 0 && box == 0 && mr[2] > 200. && rsq[2] > 0.5 ){
+	if(btag == 0 && box == 0 && mr[2] > 200. && rsq[2] > 0.5  && Dphi_B < 2.5 ){
 	  //mr_rsq->Fill(mr[2], rsq[2], hlt_w);
 	  h_2d[xs_counter]->Fill(mr[2], rsq[2], hlt_w*scaleF);
-	  N_passed++;
+	  N_passed += hlt_w;
 	}
       }
       
@@ -342,61 +342,92 @@ int main(){
       }
       
       ca->cd();
+      h_met_deltaPhi[xs_counter]->SetStats(0);
       gPad->SetLogy(0);
+      h_met_deltaPhi[xs_counter]->SetXTitle("#Delta#phi");
+      h_met_deltaPhi[xs_counter]->SetYTitle("#slash{E}_{T}");
+      h_met_deltaPhi[xs_counter]->SetMaximum(30);
       h_met_deltaPhi[xs_counter]->Draw("colz");
       gPad->SetLogy(0);
       ca->SaveAs("Plots/Dphi/"+met_dphi_name+".pdf");
       ca->SaveAs("Plots/Dphi/"+met_dphi_name+".png");
       
+      h_r2_deltaPhi[xs_counter]->SetStats(0);
+      h_r2_deltaPhi[xs_counter]->SetXTitle("#Delta#phi");
+      h_r2_deltaPhi[xs_counter]->SetYTitle("R^{2}");
+      h_r2_deltaPhi[xs_counter]->SetMaximum(30);
       h_r2_deltaPhi[xs_counter]->Draw("colz");
       ca->SaveAs("Plots/Dphi/"+r2_dphi_name+".pdf");
       ca->SaveAs("Plots/Dphi/"+r2_dphi_name+".png");
-
       
+      
+      h_Dphi[xs_counter]->SetStats(0);
+      h_Dphi[xs_counter]->GetYaxis()->SetRangeUser(1,300);
+      h_Dphi[xs_counter]->SetXTitle("#Delta#phi");
       h_Dphi[xs_counter]->Draw("");
       gPad->SetLogy(1);
       ca->SaveAs("Plots/Dphi/"+dmsampleTS+"_Dphi_1d.pdf");
       ca->SaveAs("Plots/Dphi/"+dmsampleTS+"_Dphi_1d.png");
 
       gPad->SetLogy(0);
+      h_r2_alpha[xs_counter]->SetXTitle("#alpha");
+      h_r2_alpha[xs_counter]->SetYTitle("R^{2}");
+      h_r2_alpha[xs_counter]->SetStats(0);
       h_r2_alpha[xs_counter]->Draw("colz");
       gPad->SetLogy(0);
       ca->SaveAs("Plots/alpha/"+r2_alpha_name+".pdf");
       ca->SaveAs("Plots/alpha/"+r2_alpha_name+".png");
       
+      h_r2_alphaT[xs_counter]->SetStats(0);
+      h_r2_alphaT[xs_counter]->SetXTitle("#alpha_{T}");
+      h_r2_alphaT[xs_counter]->SetYTitle("R^{2}");
       h_r2_alphaT[xs_counter]->Draw("colz");
       ca->SaveAs("Plots/alpha/"+r2_alphaT_name+".pdf");
       ca->SaveAs("Plots/alpha/"+r2_alphaT_name+".png");
       
+      
+      h_met_alpha[xs_counter]->SetStats(0);
+      h_met_alpha[xs_counter]->SetXTitle("#alpha");
+      h_met_alpha[xs_counter]->SetYTitle("#slash{E}_{T}");
       h_met_alpha[xs_counter]->Draw("colz");
       ca->SaveAs("Plots/alpha/"+met_alpha_name+".pdf");
       ca->SaveAs("Plots/alpha/"+met_alpha_name+".png");
       
+      h_met_alphaT[xs_counter]->SetStats(0);
+      h_met_alphaT[xs_counter]->SetXTitle("#alpha_{T}");
+      h_met_alphaT[xs_counter]->SetYTitle("#slash{E}_{T}");
       h_met_alphaT[xs_counter]->Draw("colz");
       ca->SaveAs("Plots/alpha/"+met_alphaT_name+".pdf");
       ca->SaveAs("Plots/alpha/"+met_alphaT_name+".png");
 
+      h_alpha[xs_counter]->SetStats(0);
+      h_alpha[xs_counter]->SetXTitle("#alpha");
       h_alpha[xs_counter]->Draw();
       gPad->SetLogy(1);
       ca->SaveAs("Plots/alpha/"+dmsampleTS+"_alpha_1d.pdf");
       ca->SaveAs("Plots/alpha/"+dmsampleTS+"_alpha_1d.png");
       
       
+      h_alphaT[xs_counter]->SetStats(0);
+      h_alphaT[xs_counter]->SetXTitle("#alpha_{T}");
       h_alphaT[xs_counter]->Draw();
       ca->SaveAs("Plots/alpha/"+dmsampleTS+"_alphaT_1d.pdf");
       ca->SaveAs("Plots/alpha/"+dmsampleTS+"_alphaT_1d.png");
       
-      
+      h_r2[xs_counter]->SetStats(0);
+      h_r2[xs_counter]->SetXTitle("R^{2}");
       h_r2[xs_counter]->Draw();
       ca->SaveAs("Plots/R2/"+dmsampleTS+"_r2_1d.pdf");
       ca->SaveAs("Plots/R2/"+dmsampleTS+"_r2_1d.png");
       
-      
+      h_met[xs_counter]->SetStats(0);
+      h_met[xs_counter]->SetXTitle("#slash{E}_{T}");
       h_met[xs_counter]->Draw();
       ca->SaveAs("Plots/met/"+dmsampleTS+"_met_1d.pdf");
       ca->SaveAs("Plots/met/"+dmsampleTS+"_met_1d.png");
       
-      
+      h_theta[xs_counter]->SetStats(0);
+      h_theta[xs_counter]->SetXTitle("#Delta#theta");
       h_theta[xs_counter]->Draw();
       ca->SaveAs("Plots/theta/"+dmsampleTS+"_theta_1d.pdf");
       ca->SaveAs("Plots/theta/"+dmsampleTS+"_theta_1d.png");
@@ -405,55 +436,84 @@ int main(){
       //Boosted Histos
       ////////////////////////
       
-      
+      h_beta_r[xs_counter]->SetStats(0);
       h_beta_r[xs_counter]->Draw();
       ca->SaveAs("Plots/Boost/"+dmsampleTS+"_beta_r_1d.pdf");
       ca->SaveAs("Plots/Boost/"+dmsampleTS+"_beta_r_1d.png");
 
+      h_theta_B[xs_counter]->SetStats(0);
+      h_theta_B[xs_counter]->SetXTitle("#Delta#theta_{B}");
       h_theta_B[xs_counter]->Draw();
       ca->SaveAs("Plots/theta/"+dmsampleTS+"_theta_1d_B.pdf");
       ca->SaveAs("Plots/theta/"+dmsampleTS+"_theta_1d_B.png");
 
       gPad->SetLogy(0);
+      h_met_deltaPhi_B[xs_counter]->SetXTitle("#Delta#phi_{R}");
+      h_met_deltaPhi_B[xs_counter]->SetYTitle("#slash{E}_{T}");
+      h_met_deltaPhi_B[xs_counter]->SetStats(0);
+      h_met_deltaPhi_B[xs_counter]->SetMaximum(30);
       h_met_deltaPhi_B[xs_counter]->Draw("colz");
       gPad->SetLogy(0);
       ca->SaveAs("Plots/Dphi/"+met_dphi_name+"_B.pdf");
       ca->SaveAs("Plots/Dphi/"+met_dphi_name+"_B.png");
       
+      h_r2_deltaPhi_B[xs_counter]->SetXTitle("#Delta#phi_{R}");
+      h_r2_deltaPhi_B[xs_counter]->SetYTitle("R^{2}");
       h_r2_deltaPhi_B[xs_counter]->Draw("colz");
+      h_r2_deltaPhi_B[xs_counter]->SetMaximum(30);
+      h_r2_deltaPhi_B[xs_counter]->SetStats(0);
       ca->SaveAs("Plots/Dphi/"+r2_dphi_name+"_B.pdf");
       ca->SaveAs("Plots/Dphi/"+r2_dphi_name+"_B.png");
 
       gPad->SetLogy();
+      h_Dphi_B[xs_counter]->SetXTitle("#Delta#phi_{R}");
+      h_Dphi_B[xs_counter]->SetStats(0);
+      h_Dphi_B[xs_counter]->GetYaxis()->SetRangeUser(1,300);
       h_Dphi_B[xs_counter]->Draw("");
       gPad->SetLogy();
       ca->SaveAs("Plots/Dphi/"+dmsampleTS+"_Dphi_1d_B.pdf");
       ca->SaveAs("Plots/Dphi/"+dmsampleTS+"_Dphi_1d_B.png");
       
       gPad->SetLogy(0);
+      h_r2_alpha_B[xs_counter]->SetStats(0);
+      h_r2_alpha_B[xs_counter]->SetXTitle("#alpha^{B}");
+      h_r2_alpha_B[xs_counter]->SetYTitle("R^{2}");
       h_r2_alpha_B[xs_counter]->Draw("colz");
       gPad->SetLogy(0);
       ca->SaveAs("Plots/alpha/"+r2_alpha_name+"_B.pdf");
       ca->SaveAs("Plots/alpha/"+r2_alpha_name+"_B.png");
       
+      h_r2_alphaT_B[xs_counter]->SetStats(0);
+      h_r2_alphaT_B[xs_counter]->SetXTitle("#alpha^{B}_{T}");
+      h_r2_alphaT_B[xs_counter]->SetYTitle("R^{2}");
       h_r2_alphaT_B[xs_counter]->Draw("colz");
       ca->SaveAs("Plots/alpha/"+r2_alphaT_name+"_B.pdf");
       ca->SaveAs("Plots/alpha/"+r2_alphaT_name+"_B.png");
       
+      h_met_alpha_B[xs_counter]->SetStats(0);
+      h_met_alpha_B[xs_counter]->SetXTitle("#alpha^{B}");
+      h_met_alpha_B[xs_counter]->SetYTitle("#slash{E}_{T}");
       h_met_alpha_B[xs_counter]->Draw("colz");
       ca->SaveAs("Plots/alpha/"+met_alpha_name+"_B.pdf");
       ca->SaveAs("Plots/alpha/"+met_alpha_name+"_B.png");
       
+      h_met_alphaT_B[xs_counter]->SetStats(0);
+      h_met_alphaT_B[xs_counter]->SetXTitle("#alpha^{B}_{T}");
+      h_met_alphaT_B[xs_counter]->SetYTitle("#slash{E}_{T}");
       h_met_alphaT_B[xs_counter]->Draw("colz");
       ca->SaveAs("Plots/alpha/"+met_alphaT_name+"_B.pdf");
       ca->SaveAs("Plots/alpha/"+met_alphaT_name+"_B.png");
 
       gPad->SetLogy();
+      h_alpha_B[xs_counter]->SetStats(0);
+      h_alpha_B[xs_counter]->SetXTitle("#alpha^{B}");
       h_alpha_B[xs_counter]->Draw();
       gPad->SetLogy();
       ca->SaveAs("Plots/alpha/"+dmsampleTS+"_alpha_1d_B.pdf");
       ca->SaveAs("Plots/alpha/"+dmsampleTS+"_alpha_1d_B.png");
       
+      h_alphaT_B[xs_counter]->SetStats(0);
+      h_alphaT_B[xs_counter]->SetXTitle("#alpha^{B}_{T}");
       h_alphaT_B[xs_counter]->Draw();
       ca->SaveAs("Plots/alpha/"+dmsampleTS+"_alphaT_1d_B.pdf");
       ca->SaveAs("Plots/alpha/"+dmsampleTS+"_alphaT_1d_B.png");
