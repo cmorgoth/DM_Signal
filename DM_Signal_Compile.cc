@@ -27,7 +27,7 @@ int main(){
   TH2F* mr_rsq;
 
   
-  TFile* in = new TFile("/Users/cmorgoth/Software/git/BkgPredictionDM/Bkg_Pred_from_Data_2D_ttMC.root");
+  TFile* in = new TFile("/Users/cmorgoth/Software/git/BkgPredictionDM/Pred_Files/BkgPred_ttMC_NNLO.root");
   
   TH1F* tt_1D = (TH1F*)in->Get("tt_1D");
   TH1F* tt_1D_alphaUp = (TH1F*)in->Get("tt_1D_alphaUp");
@@ -65,6 +65,10 @@ int main(){
   TH2F* h_r2_alphaT[24];
   TH2F* h_met_alpha[24];
   TH2F* h_met_alphaT[24];
+
+  
+  TH1F* h_M2[24];
+  TH1F* h_M2_overPhi[24];
   
   TH2F* h_met_deltaPhi_B[24];
   TH2F* h_r2_deltaPhi_B[24];
@@ -72,6 +76,7 @@ int main(){
   TH2F* h_r2_alphaT_B[24];
   TH2F* h_met_alpha_B[24];
   TH2F* h_met_alphaT_B[24];
+  TH1F* h_R_DM[24];
 
   TH1F* h_1d[24];
   TH1F* h_1d_up[24];
@@ -90,6 +95,7 @@ int main(){
   TH1F* h_theta_B[24];
   TH1F* h_Dphi_B[24];
   TH1F* h_beta_r[24];
+  TH1F* h_R_DM_B[24];
   
   if (mfile0.is_open()){
     while ( mfile0.good() ){
@@ -182,8 +188,8 @@ int main(){
       double Lumi = 19.6;
       //double xsec = 1;
       //double scaleF = Lumi*xsec[xs_counter]*1000./Gen_Evts;
-      //double scaleF = Lumi*1000./Gen_Evts;
-      double scaleF = 1;
+      double scaleF = Lumi*1000./Gen_Evts;
+      //double scaleF = 1;
       //std::cout << dm_sample << " " << xsec[xs_counter] << std::endl;
       
       //std::cout << "scaleF : " << scaleF << std::endl;
@@ -195,13 +201,18 @@ int main(){
       TString r2_alphaT_name = dm_sample.c_str();
       TString met_alpha_name = dm_sample.c_str();
       TString met_alphaT_name = dm_sample.c_str();
+      TString R_DM_name = dm_sample.c_str();
+      TString M2_name = dm_sample.c_str();
+      TString M2_name_OverPhi = dm_sample.c_str();
       met_dphi_name += "_met_dphi"; 
       r2_dphi_name += "_r2_dphi"; 
       r2_alpha_name += "_r2_alpha"; 
       r2_alphaT_name += "_r2_alphaT"; 
       met_alpha_name += "_met_alpha"; 
-      met_alphaT_name += "_met_alphaT"; 
-      
+      R_DM_name += "_R_DM"; 
+      M2_name += "_M2";
+      M2_name_OverPhi += "_M2_OverPhi";
+
       h_met_deltaPhi[xs_counter] = new TH2F(met_dphi_name, met_dphi_name, 100, -TMath::Pi(), TMath::Pi(), 100, 0.0, 1500);
       h_r2_deltaPhi[xs_counter] = new TH2F(r2_dphi_name, r2_dphi_name, 100, -TMath::Pi(), TMath::Pi(), 100, 0.0, 2.5);
       h_r2_alpha[xs_counter] = new TH2F(r2_alpha_name, r2_alpha_name, 100, -0.2, 5, 100, 0.0, 2.5);
@@ -214,7 +225,10 @@ int main(){
       h_met[xs_counter] = new TH1F(dmsampleTS+"_met", dmsampleTS+"_met",100, 0.0, 1500.);
       h_theta[xs_counter] = new TH1F(dmsampleTS+"_theta", dmsampleTS+"_theta", 100, 0, TMath::Pi());
       h_Dphi[xs_counter] = new TH1F(dmsampleTS+"_Dphi", dmsampleTS+"_Dphi", 100, -TMath::Pi(), TMath::Pi());
-
+      h_R_DM[xs_counter] = new TH1F(R_DM_name, R_DM_name, 100, -1000, 10000);
+      h_M2[xs_counter] = new TH1F(M2_name, M2_name, 1000, -1000, 1000);
+      h_M2_overPhi[xs_counter] = new TH1F(M2_name_OverPhi, M2_name_OverPhi, 100, 0, 2000);
+      
       //Boosted Histos
       h_met_deltaPhi_B[xs_counter] = new TH2F(met_dphi_name+"_B", met_dphi_name+"_B", 100, -TMath::Pi(), TMath::Pi(), 100, 0.0, 1500);
       h_r2_deltaPhi_B[xs_counter] = new TH2F(r2_dphi_name+"_B", r2_dphi_name+"_B", 100, -TMath::Pi(), TMath::Pi(), 100, 0.0, 2.5);
@@ -229,6 +243,7 @@ int main(){
       h_theta_B[xs_counter] = new TH1F(dmsampleTS+"_theta_B", dmsampleTS+"_theta_B", 100, 0, TMath::Pi());
       h_Dphi_B[xs_counter] = new TH1F(dmsampleTS+"_Dphi_B", dmsampleTS+"_Dphi_B", 100, -TMath::Pi(), TMath::Pi());
       h_beta_r[xs_counter] = new TH1F(dmsampleTS+"_beta_r", dmsampleTS+"_beta_r", 200, -1.5, 1.5);
+      h_R_DM_B[xs_counter] = new TH1F(R_DM_name+"_B", R_DM_name+"_B", 100, -1000, 10000);
       
       double N_passed = 0.0;
       for(int j = 0; j < N_out; j++){
@@ -239,20 +254,29 @@ int main(){
 	TLorentzVector j2;
 	TLorentzVector sumJ;
 	
-	//j1.SetPtEtaPhiE(Jet_PT[0], Jet_Eta[0], Jet_Phi[0], Jet_PT[0]*cosh(Jet_Eta[0]));
-	//j2.SetPtEtaPhiE(Jet_PT[1], Jet_Eta[1], Jet_Phi[1], Jet_PT[1]*cosh(Jet_Eta[1]));
-	j1.SetPtEtaPhiE(pTHem1, etaHem1, phiHem1, pTHem1*cosh(etaHem1));//Hemisphere
-        j2.SetPtEtaPhiE(pTHem2, etaHem2, phiHem2, pTHem2*cosh(etaHem2));//Hemisphere
+	j1.SetPtEtaPhiE(Jet_PT[0], Jet_Eta[0], Jet_Phi[0], Jet_PT[0]*cosh(Jet_Eta[0]));
+	j2.SetPtEtaPhiE(Jet_PT[1], Jet_Eta[1], Jet_Phi[1], Jet_PT[1]*cosh(Jet_Eta[1]));
+	//j1.SetPtEtaPhiE(pTHem1, etaHem1, phiHem1, pTHem1*cosh(etaHem1));//Hemisphere
+        //j2.SetPtEtaPhiE(pTHem2, etaHem2, phiHem2, pTHem2*cosh(etaHem2));//Hemisphere
 	
 	sumJ = j1+j2;
+	//std::cout << "=========beta: " << sumJ.Beta() << "  ===============" << std::endl;
+	double cm_beta = sumJ.Beta();
+	TVector3 boost_dir = sumJ.Vect().Unit();
+	//TVector3 CM_Boost(cm_beta*boost_dir.Px(),cm_beta*boost_dir.Py(),cm_beta*boost_dir.Pz());
+	TVector3 CM_Boost(0.0,cm_beta*boost_dir.Py(),cm_beta*boost_dir.Pz());
+
 	double Mt = sumJ.Mt();
 	double Minv = sumJ.M();
 	double alpha = j2.Pt()/Minv;
-	double alphaT = j2.Pt()/Mt;
+	//double alphaT = j2.Pt()/Mt;
+	double alphaT = j2.Pt()/sqrt(sumJ.E()*sumJ.E() - (sumJ.Px()*sumJ.Px() + sumJ.Py()*sumJ.Py()) );
 	double Dphi = j1.DeltaPhi(j2);
 	double Dtheta = j1.Angle(j2.Vect());
 	//std::cout << "PhiJ1: " << Jet_Phi[0] << " PhiJ1: " << Jet_Phi[1] <<  " normal: " << deltaPhi << " vector: " << Dphi << std::endl;
 	double Met = sqrt(metCorrX[2]*metCorrX[2] + metCorrY[2]*metCorrY[2]);
+	double Rdm = Met/(1-cos(Dtheta));
+	
 	h_met_deltaPhi[xs_counter]->Fill(Dphi,Met,scaleF);
 	h_r2_deltaPhi[xs_counter]->Fill(Dphi,rsq[2],scaleF);
 	h_r2_alpha[xs_counter]->Fill(alpha,rsq[2],scaleF);
@@ -265,7 +289,7 @@ int main(){
 	h_met[xs_counter]->Fill(Met,scaleF);
 	h_theta[xs_counter]->Fill(Dtheta, scaleF);
 	h_Dphi[xs_counter]->Fill(Dphi, scaleF);
-	
+	h_R_DM[xs_counter]->Fill(Rdm, scaleF);
 	//Boost to the Razor Frame
 	double beta_L = (j1.Pz() +  j2.Pz())/(j1.Vect().Mag() +  j2.Vect().Mag());
 	double PT_t = (j1+j2).Pt();
@@ -284,9 +308,12 @@ int main(){
 	
 	j1_B.Boost(0.0, 0.0, -beta_L);
 	j2_B.Boost(0.0, 0.0, -beta_L);
-	
 	j1_B.Boost(-beta_R_Mag*beta_T_Star_X, -beta_R_Mag*beta_T_Star_Y, 0.0);
 	j2_B.Boost(beta_R_Mag*beta_T_Star_X, beta_R_Mag*beta_T_Star_Y, 0.0);
+	
+	//j1_B.Boost(CM_Boost);
+	//j2_B.Boost(CM_Boost);
+
 	//std::cout << "============beta: " << beta_L << " beta_R_Mag: "<< beta_R_Mag << " ==============="<<std::endl;
 	//std::cout << "j1.E: " << j1.E() << " j1.Px: " << j1.Px() << " j2.Py: " << j1.Py() << " j1.Pz: " << j1.Pz() << std::endl;
 	//std::cout << "j1_B.E: " << j1_B.E() << " j1_B.Px: " << j1_B.Px() << " j2.Py: " << j1_B.Py() << " j1_B.Pz: " << j1_B.Pz() << std::endl;
@@ -299,10 +326,14 @@ int main(){
 	double Mt_B = sumJB.Mt();
 	double Minv_B = sumJB.M();
 	double alpha_B = j2_B.Pt()/Minv_B;
-	double alphaT_B = j2_B.Pt()/Mt_B;
+	double alphaT_B = j2_B.Pt()/sqrt(sumJB.E()*sumJB.E() - (sumJB.Px()*sumJB.Px() + sumJB.Py()*sumJB.Py()) );
+	//double alphaT_B = j2_B.Pt()/Mt_B;
 	double Dphi_B = j1_B.DeltaPhi(j2_B);
 	double Dtheta_B = j1_B.Angle(j2_B.Vect());
+	double Rdm_B = Met/(1-cos(Dtheta_B));
 	//Filling Boosted Histos
+	h_M2[xs_counter]->Fill(Mt_B, scaleF);
+	h_M2_overPhi[xs_counter]->Fill(Mt_B/(1-cos(Dphi_B)), scaleF);
 	h_met_deltaPhi_B[xs_counter]->Fill(Dphi_B,Met,scaleF);
 	h_r2_deltaPhi_B[xs_counter]->Fill(Dphi_B,rsq[2],scaleF);
 	h_r2_alpha_B[xs_counter]->Fill(alpha_B,rsq[2],scaleF);
@@ -316,11 +347,11 @@ int main(){
 	h_theta_B[xs_counter]->Fill(Dtheta_B, scaleF);
 	h_Dphi_B[xs_counter]->Fill(Dphi_B, scaleF);
 	h_beta_r[xs_counter]->Fill(beta_L, scaleF);
-	
+	h_R_DM_B[xs_counter]->Fill(Rdm_B, scaleF);
 	
 	//if( mr[2]*rsq[2] > 100 && mr[2] > 200 && btag == 0 && box == 0 /*&& deltaPhi < 2.5*/)mr_rsq->Fill(mr[2], rsq[2], hlt_w);
-	//if(mr[2] > 200.0 && rsq[2] > 0.5 && btag == 0 && box == 0 && fabs(Dphi) < 2.5){
-	if(btag == 0 && box == 0 && mr[2] > 200. && rsq[2] > 0.5  && Dphi_B < 2.5 ){
+	if(mr[2] > 200.0 && rsq[2] > 0.5 && btag == 0 && box == 0 && fabs(Dphi) < 2.5){
+	  //if(btag == 0 && box == 0 && alphaT_B > 0.5 ){
 	  //mr_rsq->Fill(mr[2], rsq[2], hlt_w);
 	  h_2d[xs_counter]->Fill(mr[2], rsq[2], hlt_w*scaleF);
 	  N_passed += hlt_w;
@@ -432,6 +463,24 @@ int main(){
       ca->SaveAs("Plots/theta/"+dmsampleTS+"_theta_1d.pdf");
       ca->SaveAs("Plots/theta/"+dmsampleTS+"_theta_1d.png");
       
+      h_R_DM[xs_counter]->SetStats(0);
+      h_R_DM[xs_counter]->SetXTitle("R_{DM}");
+      h_R_DM[xs_counter]->Draw();
+      ca->SaveAs("Plots/Rdm/"+dmsampleTS+"_Rdm_1d.pdf");
+      ca->SaveAs("Plots/Rdm/"+dmsampleTS+"_Rdm_1d.png");
+
+      h_M2[xs_counter]->SetStats(0);
+      h_M2[xs_counter]->SetXTitle("M2");
+      h_M2[xs_counter]->Draw();
+      ca->SaveAs("Plots/Rdm/"+dmsampleTS+"_M2_1d.pdf");
+      ca->SaveAs("Plots/Rdm/"+dmsampleTS+"_M2_1d.png");
+
+      h_M2_overPhi[xs_counter]->SetStats(0);
+      h_M2_overPhi[xs_counter]->SetXTitle("M2");
+      h_M2_overPhi[xs_counter]->Draw();
+      ca->SaveAs("Plots/Rdm/"+dmsampleTS+"_M2_OverPhi_1d.pdf");
+      ca->SaveAs("Plots/Rdm/"+dmsampleTS+"_M2_OverPhi_1d.png");
+
       /////////////////////////
       //Boosted Histos
       ////////////////////////
@@ -518,6 +567,13 @@ int main(){
       ca->SaveAs("Plots/alpha/"+dmsampleTS+"_alphaT_1d_B.pdf");
       ca->SaveAs("Plots/alpha/"+dmsampleTS+"_alphaT_1d_B.png");
       
+      h_R_DM_B[xs_counter]->SetStats(0);
+      h_R_DM_B[xs_counter]->SetXTitle("R_{DM}");
+      h_R_DM_B[xs_counter]->Draw();
+      ca->SaveAs("Plots/Rdm/"+dmsampleTS+"_Rdm_1d_B.pdf");
+      ca->SaveAs("Plots/Rdm/"+dmsampleTS+"_Rdm_1d_B.png");
+      
+
       double sample_eff = N_passed/Gen_Evts;
       
       std::cout << "Sample Eff: " << sample_eff*100 << "%" <<std::endl;
@@ -564,7 +620,7 @@ int main(){
   
   TFile* n_f[24];
   
-  for(int k = 0; k < 13; k++){
+  for(int k = 0; k < 24; k++){
     TString s = h_2d[k]->GetName();
     s = s+"_combine.root";
     TString s2 = "combine/";
