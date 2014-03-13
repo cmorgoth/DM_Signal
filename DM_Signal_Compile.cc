@@ -15,19 +15,23 @@
 int main(){
 
   gROOT->Reset();
-
+  //5x5
+  //int MR_nb = 5;
+  //int R2_nb = 5;
+  //4x4
   int MR_nb = 4;
   int R2_nb = 4;
-  //const double R2A_B[] = {0.3, 0.4, 0.5, 0.6, 2.5};
-  //const double MRA_B[] = {200., 300., 400., 3500.};
-  
+
+
   TCanvas* ca = new TCanvas("c","c", 640, 640);
-  TFile* f2 = new TFile("trigger/hlt_eff_SignleElePD_Final.root");
+  //TFile* f2 = new TFile("trigger/hlt_eff_SignleElePD_Final.root");
+  TFile* f2 = new TFile("trigger/hlt_eff_HTMHT_0mu_BOX_0bTag_Final.root");
   TEfficiency* hlt = (TEfficiency*)f2->Get("Eff2d");
   TH2F* mr_rsq;
 
   
-  TFile* in = new TFile("/Users/cmorgoth/Software/git/BkgPredictionDM/Pred_Files/BkgPred_ttMC_NNLO.root");
+  //Getting 2D plots from Prediction
+  TFile* in = new TFile("/Users/cmorgoth/Software/git/BkgPredictionDM/Pred_Files/BkgPred_ttMC_LO_RunAB_2sys.root");
   
   TH1F* tt_1D = (TH1F*)in->Get("tt_1D");
   TH1F* tt_1D_alphaUp = (TH1F*)in->Get("tt_1D_alphaUp");
@@ -47,8 +51,32 @@ int main(){
   double dy_N = dy_1D->Integral();
   double z_N = z_1D->Integral();
   double w_N = w_1D->Integral();
+
+  //Getting 1D plots from Prediction
+  TFile* in_rsq = new TFile("/Users/cmorgoth/Software/git/BkgPredictionDM/Pred_Files/Bkg_Pred_1D_Rsq_ttMC_LO_RunAB_2sys.root");
   
+  TH1F* tt_rsq = (TH1F*)in_rsq->Get("tt_rsq");
+  TH1F* tt_rsq_alphaUp = (TH1F*)in_rsq->Get("tt_rsq_betaUp");
+  TH1F* tt_rsq_alphaDown = (TH1F*)in_rsq->Get("tt_rsq_betaDown");
+  TH1F* z_rsq = (TH1F*)in_rsq->Get("z_rsq");
+  TH1F* z_rsq_alphaUp = (TH1F*)in_rsq->Get("z_rsq_deltaUp");
+  TH1F* z_rsq_alphaDown = (TH1F*)in_rsq->Get("z_rsq_deltaDown");
+  TH1F* dy_rsq = (TH1F*)in_rsq->Get("dy_rsq");
+  TH1F* dy_rsq_alphaUp = (TH1F*)in_rsq->Get("dy_rsq_gammaUp");
+  TH1F* dy_rsq_alphaDown = (TH1F*)in_rsq->Get("dy_rsq_gammaDown");
+  TH1F* w_rsq = (TH1F*)in_rsq->Get("w_rsq");
+  TH1F* w_rsq_alphaUp = (TH1F*)in_rsq->Get("w_rsq_zetaUp");
+  TH1F* w_rsq_alphaDown = (TH1F*)in_rsq->Get("w_rsq_zetaDown");
+  TH1F* data_rsq = (TH1F*)in_rsq->Get("data_rsq");
+
+  double tt_N1 = tt_rsq->Integral();
+  double dy_N1 = dy_rsq->Integral();
+  double z_N1 = z_rsq->Integral();
+  double w_N1 = w_rsq->Integral();
+
+
   
+  //Here the program starts
   //double xsec[5] = {1.0, 1.0, 1.0, 1.0, 1.0};
   std::ifstream mfile0("list_of_files_v2.list");
   std::ofstream outfile("eff_table_normal_R2_0p5_MR_200_Dphi_B_2p5.tex");
@@ -59,6 +87,10 @@ int main(){
   std::cout.precision(16);
   int xs_counter = 0;
   TH2F* h_2d[24];
+  TH1F* h_rsq[24];
+  TH1F* h_rsq_up[24];
+  TH1F* h_rsq_down[24];
+  
   TH2F* h_met_deltaPhi[24];
   TH2F* h_r2_deltaPhi[24];
   TH2F* h_r2_alpha[24];
@@ -164,31 +196,41 @@ int main(){
       out->SetBranchAddress("metCorrY", metCorrY);
       
       int N_out = out->GetEntries();
-      
+      //5x5
+      //int n_mr = 5;
+      //int n_rsq = 5;
+      //double mr_bin[] = {200, 300, 400, 600, 900, 3500};
+      //double rsq_bin[] = {0.5, 0.6, 0.725, 0.85, 1.1, 2.5};
+      //4x4
       int n_mr = 4;
       int n_rsq = 4;
-      double mr_bin[] = {200, 400, 600, 800, 3500};
-      double rsq_bin[] = {0.5, 0.65, 0.8, 1.0, 2.5};
+      double mr_bin[] = {200, 300, 400, 600, 3500};
+      double rsq_bin[] = {0.5, 0.6, 0.725, 0.85, 2.5};
       
       mr_rsq = new TH2F("mr_rsq", "mr_rsq", n_mr, mr_bin, n_rsq, rsq_bin);
 
       TString s_c = dm_sample.c_str();
       TString s_up = dm_sample.c_str();
       TString s_down = dm_sample.c_str();
-      
+      TString s_rsq = dm_sample.c_str();
       s_c = s_c + "_c";
       s_up = s_up + "_up";
       s_down = s_down + "s_down";
       
       h_2d[xs_counter] = new TH2F(dm_sample.c_str(), dm_sample.c_str(), n_mr, mr_bin, n_rsq, rsq_bin);
+      
+      h_rsq[xs_counter] = new TH1F(s_rsq + "_rsq_c", s_rsq + "_rsq_c", n_rsq, rsq_bin);
+      h_rsq_up[xs_counter] = new TH1F(s_rsq + "_rsq_up", s_rsq + "_rsq_up", n_rsq, rsq_bin);
+      h_rsq_down[xs_counter] = new TH1F(s_rsq + "_rsq_down", s_rsq + "_rsq_down", n_rsq, rsq_bin);
+      
       h_1d[xs_counter] = new TH1F(s_c, s_c, n_mr*n_rsq, 0, n_mr*n_rsq);
       h_1d_up[xs_counter] = new TH1F(s_up, s_up, n_mr*n_rsq, 0, n_mr*n_rsq);
       h_1d_down[xs_counter] = new TH1F(s_down, s_down, n_mr*n_rsq, 0, n_mr*n_rsq);
       
-      double Lumi = 19.6;
+      double Lumi = 18.5;
       //double xsec = 1;
       //double scaleF = Lumi*xsec[xs_counter]*1000./Gen_Evts;
-      double scaleF = Lumi*1000./Gen_Evts;
+      double scaleF = Lumi*1000./Gen_Evts;//Scale to 1 pb
       //double scaleF = 1;
       //std::cout << dm_sample << " " << xsec[xs_counter] << std::endl;
       
@@ -354,10 +396,12 @@ int main(){
 	  //if(btag == 0 && box == 0 && alphaT_B > 0.5 ){
 	  //mr_rsq->Fill(mr[2], rsq[2], hlt_w);
 	  h_2d[xs_counter]->Fill(mr[2], rsq[2], hlt_w*scaleF);
+	  h_rsq[xs_counter]->Fill(rsq[2], hlt_w*scaleF);
 	  N_passed += hlt_w;
 	}
       }
       
+      //Making Error Plots and Unwrapping
       int b_ctr = 1;
       for(int m = 1; m <= n_mr; m++){
 	for(int n = 1; n <= n_rsq; n++){
@@ -372,7 +416,24 @@ int main(){
 	}
       }
       
+      //Making erro Plots 1D RSQ
+      for(int z = 1; z <= n_rsq; z++){
+	double bv = h_rsq[xs_counter]->GetBinContent(z);
+	double be = h_rsq[xs_counter]->GetBinError(z);
+	h_rsq_up[xs_counter]->SetBinContent(z,bv + be);
+	h_rsq_down[xs_counter]->SetBinContent(z,bv - be);
+      }
+
+
       ca->cd();
+      h_2d[xs_counter]->SetStats(0);
+      gPad->SetLogy(0);
+      gPad->SetLogx(0);
+      //gPad->SetLogz();
+      h_2d[xs_counter]->Draw("colztext");
+      ca->SaveAs("Plots/Signal/"+met_dphi_name+".pdf");
+      ca->SaveAs("Plots/Signal/"+met_dphi_name+".png");
+      
       h_met_deltaPhi[xs_counter]->SetStats(0);
       gPad->SetLogy(0);
       h_met_deltaPhi[xs_counter]->SetXTitle("#Delta#phi");
@@ -604,6 +665,33 @@ int main(){
       data_card_f << "delta\tshape\t-\t\t-\t\t-\t\t1\t\t-\n";
       data_card_f << "zeta\tshape\t-\t\t-\t\t-\t\t-\t\t1\n";
       data_card_f.close();
+
+      /////1D files
+      TString s1 = h_2d[xs_counter]->GetName();
+      s1 = s1+"_combine_rsq.root";
+      TString data_card_name1 = dm_sample.c_str();
+      data_card_name1 = "combine/" + data_card_name1 + "_rsq.txt";
+      std::ofstream data_card_f1(data_card_name1);
+      data_card_f1 << "imax 1\njmax 4\nkmax 6\n";
+      data_card_f1 << "------------------------------------------------------------------------------------------\n";
+      data_card_f1 << "shapes * *\t" << s1 << "\t\t$PROCESS\t$PROCESS_$SYSTEMATIC\n";
+      data_card_f1 << "------------------------------------------------------------------------------------------\n";
+      data_card_f1 << "Observation\t" << data_rsq->Integral() << "\n";
+      data_card_f1 << "------------------------------------------------------------------------------------------\n";
+      data_card_f1 << "bin\t\tb1\t\tb1\t\tb1\t\tb1\t\tb1\n";
+      data_card_f1 << "process\t\tsignal_rsq\ttt_rsq\t\tdy_rsq\t\tz_rsq\t\tw_rsq\n";
+      data_card_f1 << "process\t\t0\t\t1\t\t2\t\t3\t\t4\n";
+      data_card_f1 << "rate\t\t"<< h_rsq[xs_counter]->Integral() <<"\t\t"<< tt_N1 <<"\t\t" << dy_N1 << "\t\t" << z_N1 << "\t\t" << w_N1 << "\n";
+      data_card_f1 << "------------------------------------------------------------------------------------------\n";
+      data_card_f1 << "lumi\tlnN\t1.026\t\t1.0\t\t1.0\t\t1.0\t\t1.0\n";
+      data_card_f1 << "alpha\tshape\t1\t\t-\t\t-\t\t-\t\t-\n";
+      data_card_f1 << "beta\tshape\t-\t\t1\t\t-\t\t-\t\t-\n";
+      data_card_f1 << "gamma\tshape\t-\t\t-\t\t1\t\t-\t\t-\n";
+      data_card_f1 << "delta\tshape\t-\t\t-\t\t-\t\t1\t\t-\n";
+      data_card_f1 << "zeta\tshape\t-\t\t-\t\t-\t\t-\t\t1\n";
+      data_card_f1.close();
+
+      
       xs_counter++;
       delete out;
       delete eff;
@@ -649,6 +737,38 @@ int main(){
     w_1D_alphaUp->Write("w_1D_zetaUp");
     w_1D_alphaDown->Write("w_1D_zetaDown");
     n_f[k]->Close();
+  }
+
+  TFile* n_f_rsq[24];
+  
+  for(int k = 0; k < 24; k++){
+    TString s = h_2d[k]->GetName();
+    s = s+"_combine_rsq.root";
+    TString s2 = "combine/";
+    s = s2+s;
+    std::cout << s << std::endl;
+    n_f_rsq[k] = new TFile(s, "RECREATE");
+    data_rsq->Write("data_obs");
+    h_rsq[k]->Write("signal_rsq");
+    h_rsq_up[k]->Write("signal_rsq_alphaUp");
+    h_rsq_down[k]->Write("signal_rsq_alphaDown");
+    
+    tt_rsq->Write();
+    tt_rsq_alphaUp->Write("tt_rsq_betaUp");
+    tt_rsq_alphaDown->Write("tt_rsq_betaDown");
+    
+    dy_rsq->Write();
+    dy_rsq_alphaUp->Write("dy_rsq_gammaUp");
+    dy_rsq_alphaDown->Write("dy_rsq_gammaDown");
+      
+    z_rsq->Write();
+    z_rsq_alphaUp->Write("z_rsq_deltaUp");
+    z_rsq_alphaDown->Write("z_rsq_deltaDown");
+    
+    w_rsq->Write();
+    w_rsq_alphaUp->Write("w_rsq_zetaUp");
+    w_rsq_alphaDown->Write("w_rsq_zetaDown");
+    n_f_rsq[k]->Close();
   }
   
   return 0;

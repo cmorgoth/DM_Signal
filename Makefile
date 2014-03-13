@@ -4,14 +4,14 @@ LD = $(shell root-config --ld)
 INC = $(shell pwd)
 
 CPPFLAGS := $(shell root-config --cflags) -I$(INC)/include
-#CPPFLAGS := -I$(INC)/include
 LDFLAGS := $(shell root-config --glibs) $(STDLIBDIR)
 
 CPPFLAGS += -g
 
 TARGET = Spec
 
-SRC = DM_Signal_Compile.cc hlt.cc
+#SRC = DM_Signal_Compile.cc hlt.cc
+SRC = DM_Signal_Compile_MR_Categories.cc hlt.cc
 
 OBJ = $(SRC:.cc=.o)
 
