@@ -46,7 +46,7 @@ int main(){
   double z_N[4];//Total contribution #
   double w_N[4];//Total contribution #
   double data_N[4];//Total contribution #
-  TFile* in = new TFile("/Users/cmorgoth/Software/git/BkgPredictionDM/Pred_Files/MR_Cat_Pred.root");
+  TFile* in = new TFile("/Users/cmorgoth/Software/git/BkgPredictionDM/Pred_Files/MR_Cat_PredV2.root");
   for(int i = 0; i < 4; i++){
     dys = TString(Form("cat%d_dy_Pred",i+1));
     zs = TString(Form("cat%d_z_Pred",i+1));

@@ -11,7 +11,9 @@ CPPFLAGS += -g
 TARGET = Spec
 
 #SRC = DM_Signal_Compile.cc hlt.cc
-SRC = DM_Signal_Compile_MR_Categories.cc hlt.cc
+#SRC = DM_Signal_Compile_MR_Categories.cc hlt.cc
+#SRC = DM_Signal_Compile_MR_Categories_Uncorrelated.cc hlt.cc
+SRC = src/SellPlots.cc
 
 OBJ = $(SRC:.cc=.o)
 
