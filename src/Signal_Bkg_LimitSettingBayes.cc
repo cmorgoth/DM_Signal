@@ -46,9 +46,7 @@ int main(){
   double z_N[4];//Total contribution #
   double w_N[4];//Total contribution #
   double data_N[4];//Total contribution #
-  //TFile* in = new TFile("/Users/cmorgoth/Software/git/BkgPredictionDM/Pred_Files/MR_Cat_PredV2.root");
-  //TFile* in = new TFile("/Users/cmorgoth/Software/git/BkgPredictionDM/Pred_Files/MR_Cat_PredV2_Nominal.root");
-  TFile* in = new TFile("/Users/cmorgoth/Software/git/BkgPredictionDM/Pred_FilesMR_Cat_PredV2_ISR_Off.root");
+  TFile* in = new TFile("/Users/cmorgoth/Software/git/BkgPredictionDM/Pred_Files/MR_Cat_PredV2.root");
   for(int i = 0; i < 4; i++){
     dys = TString(Form("cat%d_dy_Pred",i+1));
     zs = TString(Form("cat%d_z_Pred",i+1));
@@ -68,7 +66,39 @@ int main(){
     tt_N[i] = tt[i]->Integral();
     data_N[i] = data[i]->Integral();
   }
+  
+  int nn_b = data[0]->GetNbinsX() + data[1]->GetNbinsX() + data[2]->GetNbinsX() + data[3]->GetNbinsX();
+  int nn_0 = data[0]->GetNbinsX();
+  int nn_1 = data[1]->GetNbinsX();
+  int nn_2 = data[2]->GetNbinsX();
+  int nn_3 = data[3]->GetNbinsX();
+  double bkg_bc[nn_b];
+  double bkg_bc_err[nn_b];
+  double signal_bc[nn_b];
+  double signal_bc_err[nn_b]; 
+  double data_bc[nn_b];
 
+  for(int j = 0; j < nn_0; j++){
+    bkg_bc[j] = bkg[0]->GetBinContent(j+1);
+    bkg_bc_err[j] = bkg[0]->GetBinError(j+1);
+    data_bc[j] = data[0]->GetBinContent(j+1);
+  }
+  for(int j = 0; j < nn_1; j++){
+    bkg_bc[j+nn_0] = bkg[1]->GetBinContent(j+1);
+    bkg_bc_err[j+nn_0] = bkg[1]->GetBinError(j+1);
+    data_bc[j+nn_0] = data[1]->GetBinContent(j+1);
+  }
+  for(int j = 0; j < nn_2; j++){
+    bkg_bc[j+nn_1+nn_0] = bkg[2]->GetBinContent(j+1);
+    bkg_bc_err[j+nn_1+nn_0] = bkg[2]->GetBinError(j+1);
+    data_bc[j+nn_1+nn_0] = data[2]->GetBinContent(j+1);
+  }
+  for(int j = 0; j < nn_3; j++){
+    bkg_bc[j+nn_0+nn_1+nn_2] = bkg[3]->GetBinContent(j+1);
+    bkg_bc_err[j+nn_0+nn_1+nn_2] = bkg[3]->GetBinError(j+1);
+    data_bc[j+nn_0+nn_1+nn_2] = data[3]->GetBinContent(j+1);
+  }
+  
   //Creating Histos for Shape Analysis
   
   TH1F* dy_up[4];
@@ -92,7 +122,7 @@ int main(){
     z_up[i] = new TH1F(bkgn, bkgn, r2B[i], v.at(i));
     bkgn = TString(Form("z_down_cat%d",i));
     z_down[i] = new TH1F(bkgn, bkgn, r2B[i], v.at(i));
-
+    
     bkgn = TString(Form("w_up_cat%d",i));
     w_up[i] = new TH1F(bkgn, bkgn, r2B[i], v.at(i));
     bkgn = TString(Form("w_down_cat%d",i));
@@ -103,18 +133,35 @@ int main(){
     bkgn = TString(Form("tt_down_cat%d",i));
     tt_down[i] = new TH1F(bkgn, bkgn, r2B[i], v.at(i));
 
+    double min_norm = 0.0001;
     for(int j = 1; j <= dy_up[i]->GetNbinsX(); j++){
       dy_up[i]->SetBinContent(j,dy[i]->GetBinContent(j)+dy[i]->GetBinError(j));
-      dy_down[i]->SetBinContent(j,dy[i]->GetBinContent(j)-dy[i]->GetBinError(j));
+      if(dy[i]->GetBinContent(j)-dy[i]->GetBinError(j) > 0.0){
+	dy_down[i]->SetBinContent(j,dy[i]->GetBinContent(j)-dy[i]->GetBinError(j));
+      }else{
+	dy_down[i]->SetBinContent(j,min_norm);
+      }
       
       z_up[i]->SetBinContent(j,z[i]->GetBinContent(j)+z[i]->GetBinError(j));
-      z_down[i]->SetBinContent(j,z[i]->GetBinContent(j)-z[i]->GetBinError(j));
+      if(z[i]->GetBinContent(j)-z[i]->GetBinError(j) > 0.0){
+	z_down[i]->SetBinContent(j,z[i]->GetBinContent(j)-z[i]->GetBinError(j));
+      }else{
+	z_down[i]->SetBinContent(j,min_norm);
+      }
 
       w_up[i]->SetBinContent(j,w[i]->GetBinContent(j)+w[i]->GetBinError(j));
-      w_down[i]->SetBinContent(j,w[i]->GetBinContent(j)-w[i]->GetBinError(j));
+      if(w[i]->GetBinContent(j)-w[i]->GetBinError(j) > 0.0){
+	w_down[i]->SetBinContent(j,w[i]->GetBinContent(j)-w[i]->GetBinError(j));
+      }else{
+	w_down[i]->SetBinContent(j,min_norm);
+      }
       
       tt_up[i]->SetBinContent(j,tt[i]->GetBinContent(j)+tt[i]->GetBinError(j));
-      tt_down[i]->SetBinContent(j,tt[i]->GetBinContent(j)-tt[i]->GetBinError(j));
+      if(tt[i]->GetBinContent(j)-tt[i]->GetBinError(j) > 0.0){
+	tt_down[i]->SetBinContent(j,tt[i]->GetBinContent(j)-tt[i]->GetBinError(j));
+      }else{
+	tt_down[i]->SetBinContent(j,min_norm);
+      }
       
     }
     
@@ -139,20 +186,18 @@ int main(){
   std::ifstream mfile0("list_of_files_v2.list");
   std::ofstream outfile("eff_table_normal_R2_0p5_MR_200_Dphi_B_2p5.tex");
   
-  outfile << "\\begin{table}[htdp]\n\\caption{default}\n\\begin{center}\n\\begin{tabular}{|c|c|c|c||c|c|}\n\\hline\n";
-  outfile << "Sample & $N >=2$ & $N_{j} == 2$ \\% & $N_{j} > 2$ \\% & N_{j} == 2, P_{T}(j_{1}) > 110 GeV \\% &  N_{j} == 2, P_{T}(j_{1}) > 110 GeV, MET > 400 GeV \\%" 
-	  << "\\" << "\\" << "\n\\hline\n";
+  outfile << "\\begin{table}[htdp]\n\\caption{default}\n\\begin{center}\n\\begin{tabular}{|c|c|}\n\\hline\n";
   
   std::string fname0;
   std::cout.precision(16);
   int xs_counter = 0;
   
-  
+  //LOOP OVER ALL SIGNAL SAMPLES
   if (mfile0.is_open()){
     while ( mfile0.good() ){
       mfile0 >> fname0;
       if(mfile0.eof())break;
-      //std::cout << fname0 << std::endl;
+      std::cout << fname0 << std::endl;
       int low_ = fname0.find("DMm");
       int high_ = fname0.find("_testMC_0.root") - low_;
       
@@ -162,8 +207,7 @@ int main(){
       TTree* eff = (TTree*)f->Get("effTree");
       TTree* out = (TTree*)f->Get("outTree");
       
-      double mr[4], rsq[4], Jet_PT[20], Jet_Eta[20], Jet_Phi[20], Npassed_In,
-	metX[4], metY[4], metCorrX[4], metCorrY[4];
+      double mr[4], rsq[4], Jet_PT[20], Jet_Eta[20], Jet_Phi[20], Npassed_In, metCorrX[4], metCorrY[4];
       double pTHem1, pTHem2, etaHem1, etaHem2, phiHem1, phiHem2;
       int btag, box, N_Jets;
       
@@ -179,7 +223,7 @@ int main(){
 	Gen_Evts += Npassed_In;
       }
       
-      //std::cout << "Gen_Events: " << Gen_Evts << std::endl;
+      std::cout << "Gen_Events: " << Gen_Evts << std::endl;
       
       out->SetBranchStatus("*", 0);
       out->SetBranchStatus("MR", 1);
@@ -196,8 +240,6 @@ int main(){
       out->SetBranchStatus("etaHem2",1);
       out->SetBranchStatus("phiHem1",1);
       out->SetBranchStatus("phiHem2",1);
-      out->SetBranchStatus("metX",1);
-      out->SetBranchStatus("metY",1);
       out->SetBranchStatus("metCorrX",1);
       out->SetBranchStatus("metCorrY",1);
       out->SetBranchAddress("MR", mr);
@@ -214,17 +256,13 @@ int main(){
       out->SetBranchAddress("etaHem2", &etaHem2);
       out->SetBranchAddress("phiHem1", &phiHem1);
       out->SetBranchAddress("phiHem2", &phiHem2);
-      out->SetBranchAddress("metX", metX);
-      out->SetBranchAddress("metY", metY);
       out->SetBranchAddress("metCorrX", metCorrX);
       out->SetBranchAddress("metCorrY", metCorrY);
       
       int N_out = out->GetEntries();
-      //double Lumi = 18.51;//PromptReco
-      double Lumi = 18.836;//Jan22Rereco
-      
+      double Lumi = 18.5;
       double scaleF = Lumi*1000./Gen_Evts;//Scale to 1 pb
-      double N_passed[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
+      double N_passed = 0.0;
       for(int j = 0; j < N_out; j++){
 	out->GetEntry(j);
 	double hlt_w = HLTscale(mr[2], rsq[2], hlt);
@@ -233,53 +271,30 @@ int main(){
 	TLorentzVector j2;
 	j1.SetPtEtaPhiE(pTHem1, etaHem1, phiHem1, pTHem1*cosh(etaHem1));//Hemisphere
 	j2.SetPtEtaPhiE(pTHem2, etaHem2, phiHem2, pTHem2*cosh(etaHem2));//Hemisphere
-	
-	TLorentzVector j1_b;//Normal Jet
-	TLorentzVector j2_b;//Normal Jet
-	j1_b.SetPtEtaPhiE(Jet_PT[0], Jet_Eta[0], Jet_Phi[0], Jet_PT[0]*cosh(Jet_Eta[0]));//Leading Jet
-	j2_b.SetPtEtaPhiE(Jet_PT[1], Jet_Eta[1], Jet_Phi[1], Jet_PT[1]*cosh(Jet_Eta[1]));//SubLeading Jet
-	
-	
 	double Dphi = j1.DeltaPhi(j2);
-	double Dphi_mono = j1_b.DeltaPhi(j2_b);
-	double MET = sqrt(metX[2]*metX[2]+metY[2]*metY[2]);
-	if(mr[2] > 200.0 && rsq[2] > 0.5 && btag == 0 && box == 0 && fabs(Dphi) < 2.5){
+	
+	if(mr[2] >= 200.0 && rsq[2] >= 0.5 && btag == 0 && box == 0 && fabs(Dphi) < 2.5){
 	  if(mr[2] > 200.0 && mr[2] <= 300.0 ){
+	    if(rsq[2] > 1.2)rsq[2] = 1.1;
 	    h_rsq[xs_counter][0]->Fill(rsq[2], hlt_w*scaleF);
 	  }else if(mr[2] > 300.0 && mr[2] <= 400.0){
+	    if(rsq[2] > 1.2)rsq[2] = 1.1;
 	    h_rsq[xs_counter][1]->Fill(rsq[2], hlt_w*scaleF);
 	  }else if(mr[2] > 400.0 && mr[2] <= 600.0){
+	    if(rsq[2] > 1.2)rsq[2] = 1.1;
 	    h_rsq[xs_counter][2]->Fill(rsq[2], hlt_w*scaleF);
 	  }else if(mr[2] > 600.0 && mr[2] <= 3500.0){
+	    if(rsq[2] > 1.2)rsq[2] = 1.1;
 	    h_rsq[xs_counter][3]->Fill(rsq[2], hlt_w*scaleF);
 	  }
-	  N_passed[0] += hlt_w;
+	  N_passed += hlt_w;
 	}
+      }//End LOOP
 
-	if(mr[2] > 200.0 && rsq[2] > 0.5 && btag == 0 && box == 0 && fabs(Dphi) < 2.5 && N_Jets == 2)N_passed[1] += hlt_w;
-	if(mr[2] > 200.0 && rsq[2] > 0.5 && btag == 0 && box == 0 && fabs(Dphi) < 2.5 && N_Jets > 2)N_passed[2] += hlt_w;
-	if(mr[2] > 200.0 && rsq[2] > 0.5 && btag == 0 && box == 0 && fabs(Dphi) < 2.5 && N_Jets == 2 
-	   && Jet_PT[0] > 110)N_passed[3] += hlt_w;
-	if(mr[2] > 200.0 && rsq[2] > 0.5 && btag == 0 && box == 0 && fabs(Dphi) < 2.5 && N_Jets == 2 
-	   && Jet_PT[0] > 110 && MET > 400) N_passed[4] += hlt_w;
-	//if(mr[2] > 200.0 && rsq[2] > 0.5 && btag == 0 && box == 0 && fabs(Dphi_mono) < 2.5){
-	
-
-      }
+      double sample_eff = N_passed/Gen_Evts;
       
-      double s_eff[5];
-      for(int mm = 0; mm < 5; mm++){
-	s_eff[mm] = (N_passed[mm]/Gen_Evts)*100.0;
-      }
-      
-      //std::cout << "Sample Eff: " << sample_eff*100 << "%" <<std::endl;
-      
-      outfile << dm_sample << " & " << s_eff[0] << " & " << 
-	s_eff[1] << " & " <<
-	s_eff[2] << " & " <<
-	s_eff[3] << " & " <<
-	s_eff[4] <<
-	"\\" << "\\" << "\n";
+      std::cout << "Sample Eff: " << sample_eff*100 << "%" <<std::endl;
+      outfile << dm_sample << " & " << sample_eff*100 << "\\%" << "\\" << "\\" << "\n";
       outfile << "\\hline" << std::endl;
 
       for(int i = 0; i < 4; i++){
@@ -299,7 +314,7 @@ int main(){
 	
 	data_card_name1 = "combine/" + data_card_name1 + Form("_rsq_cat%d.txt",i+1);
 	std::ofstream data_card_f1(data_card_name1);
-	data_card_f1 << "imax 1\njmax 4\nkmax 6\n";
+	data_card_f1 << "imax 1\njmax 4\nkmax 4\n";
 	data_card_f1 << "------------------------------------------------------------------------------------------\n";
 	data_card_f1 << "shapes * *\t" << s1 << "\t\t$PROCESS\t$PROCESS_$SYSTEMATIC\n";
 	data_card_f1 << "------------------------------------------------------------------------------------------\n";
@@ -313,9 +328,7 @@ int main(){
 	data_card_f1 << "lumi\tlnN\t1.026\t\t1.0\t\t1.0\t\t1.0\t\t1.0\n";
 	data_card_f1 << "alpha\tshape\t1\t\t-\t\t-\t\t-\t\t-\n";
 	data_card_f1 << "beta\tshape\t-\t\t1\t\t-\t\t-\t\t-\n";
-	data_card_f1 << "gamma\tshape\t-\t\t-\t\t1\t\t-\t\t-\n";
-	data_card_f1 << "delta\tshape\t-\t\t-\t\t-\t\t1\t\t-\n";
-	data_card_f1 << "zeta\tshape\t-\t\t-\t\t-\t\t-\t\t1\n";
+	data_card_f1 << "gamma\tshape\t-\t\t-\t\t1\t\t1\t\t1\n";
 	data_card_f1.close();
 
 	fo = new TFile("combine/"+s1, "RECREATE");
@@ -331,12 +344,12 @@ int main(){
 	dy_down[i]->Write("dy_rsq_gammaDown");
 	
 	z[i]->Write("z_rsq");
-	z_up[i]->Write("z_rsq_deltaUp");
-	z_down[i]->Write("z_rsq_deltaDown");
+	z_up[i]->Write("z_rsq_gammaUp");
+	z_down[i]->Write("z_rsq_gammaDown");
 
 	w[i]->Write("w_rsq");
-	w_up[i]->Write("w_rsq_zetaUp");
-	w_down[i]->Write("w_rsq_zetaDown");
+	w_up[i]->Write("w_rsq_gammaUp");
+	w_down[i]->Write("w_rsq_gammaDown");
 	
 	tt[i]->Write("tt_rsq");
 	tt_up[i]->Write("tt_rsq_betaUp");
@@ -346,6 +359,37 @@ int main(){
 	fo->Close();
 	
       }
+      
+      
+      //Signal
+      
+      for(int j = 0; j < nn_0; j++){
+	signal_bc[j] = h_rsq[xs_counter][0]->GetBinContent(j+1);
+	signal_bc_err[j] = h_rsq[xs_counter][0]->GetBinError(j+1);
+      }
+      for(int j = 0; j < nn_1; j++){
+	signal_bc[j+nn_0] = h_rsq[xs_counter][1]->GetBinContent(j+1);
+	signal_bc_err[j+nn_0] = h_rsq[xs_counter][1]->GetBinError(j+1);
+      }
+      for(int j = 0; j < nn_2; j++){
+	signal_bc[j+nn_1+nn_0] = h_rsq[xs_counter][2]->GetBinContent(j+1);
+	signal_bc_err[j+nn_1+nn_0] = h_rsq[xs_counter][2]->GetBinError(j+1);
+      }
+      for(int j = 0; j < nn_3; j++){
+	signal_bc[j+nn_0+nn_1+nn_2] = h_rsq[xs_counter][3]->GetBinContent(j+1);
+	signal_bc_err[j+nn_0+nn_1+nn_2] = h_rsq[xs_counter][3]->GetBinError(j+1);
+      }
+      
+      
+      TString cf_name = dm_sample.c_str();
+      cf_name = cf_name + "_cf.txt";
+      std::ofstream cf(cf_name);
+      cf << "N_bkg\tE_bkg\tN_signal\tE_signal\tData_Obs\n";
+      
+      for(int j = 0; j < nn_b; j++){
+	cf << bkg_bc[j] << "\t" << bkg_bc_err[j] << "\t" << signal_bc[j] << "\t" << signal_bc_err[j] << "\t" << data_bc[j] << "\n";
+      }
+      cf.close();
       
       xs_counter++;
       delete out;
