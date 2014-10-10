@@ -26,7 +26,7 @@ the error band
 
 int main(){
 
-  gROOT->Reset();
+  //gROOT->Reset();
 
 
   const int r2B[4] = {11, 6, 6, 4};
@@ -61,7 +61,8 @@ int main(){
   //TFile* in = new TFile("/Users/cmorgoth/Software/git/BkgPredictionDM/Pred_Files/MR_Cat_PredV2_Nominal.root");
   //TFile* in = new TFile("/Users/cmorgoth/Software/git/BkgPredictionDM/Pred_Files/MR_Cat_PredV2_ISR_Off.root");
   
-  TFile* in = new TFile("/Users/cmorgoth/Software/git/BkgPredictionDM/PredFilesFinal/MR_Cat_PredV2_NEW_kF.root");
+  //TFile* in = new TFile("/Users/cmorgoth/Software/git/BkgPredictionDM/PredFilesFinal/MR_Cat_PredV2_NEW_kF.root");
+  TFile* in = new TFile("/Users/cmorgoth/Software/git/BkgPredictionDM/PredFilesAN/MR_Cat_PredV2_NEW_kF.root");
   
   for(int i = 0; i < 4; i++){
     dys = TString(Form("cat%d_dy_Pred",i+1));
@@ -179,6 +180,7 @@ int main(){
   
   //std::ifstream mfile0("list_of_files_v2.list");
   std::ifstream mfile0("list_DM_BIS_PDF.list");
+  //std::ifstream mfile0("list_DM_BugFixed.list");
   std::ofstream outfile("eff_table_normal_R2_0p5_MR_200_Dphi_B_2p5_New.tex");
 
   std::string fname0;

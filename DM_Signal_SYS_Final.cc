@@ -22,7 +22,7 @@ PU re-weighting, and the HLT weight for the turn-on curve
 
 int main(){
 
-  gROOT->Reset();
+  //gROOT->Reset();
 
 
   const int r2B[4] = {11, 6, 6, 4};
@@ -57,7 +57,8 @@ int main(){
   //TFile* in = new TFile("/Users/cmorgoth/Software/git/BkgPredictionDM/Pred_Files/MR_Cat_PredV2_Nominal.root");
   //TFile* in = new TFile("/Users/cmorgoth/Software/git/BkgPredictionDM/Pred_Files/MR_Cat_PredV2_ISR_Off.root");
   
-  TFile* in = new TFile("/Users/cmorgoth/Software/git/BkgPredictionDM/PredFilesFinal/MR_Cat_PredV2_NEW_kF.root");
+  //TFile* in = new TFile("/Users/cmorgoth/Software/git/BkgPredictionDM/PredFilesFinal/MR_Cat_PredV2_NEW_kF.root");
+  TFile* in = new TFile("/Users/cmorgoth/Software/git/BkgPredictionDM/PredFilesAN/MR_Cat_PredV2_NEW_kF.root");
   
   for(int i = 0; i < 4; i++){
     dys = TString(Form("cat%d_dy_Pred",i+1));
@@ -148,6 +149,8 @@ int main(){
   }
 
   TH1F* h_rsq[24][4];
+  TH1F* h_met[24][4];
+  TH1F* h_njets[24][4];
   
   TH1F* h_rsq_ISR_up[24][4];
   TH1F* h_rsq_ISR_down[24][4];
@@ -164,8 +167,19 @@ int main(){
   TH1F* pdf_acc[24][4];
   
   TString sn;
+  int nb_met = 20;
+  int nb_njets = 9;
+  float met_xlow = 0.0;
+  float met_xhigh = 1500.0;
+  float njets_xlow = 1.0;
+  float njets_xhigh = 10.0;
   for(int j = 0; j < 24; j++){
     for(int i = 0; i < 4; i++){
+      sn = TString(Form("signal%d_cat%d_met",j,i+1));
+      h_met[j][i] = new TH1F(sn, sn, nb_met, met_xlow, met_xhigh);
+      sn = TString(Form("signal%d_cat%d_njets",j,i+1));
+      h_njets[j][i] = new TH1F(sn, sn, nb_njets, njets_xlow, njets_xhigh);
+      
       sn = TString(Form("signal%d_cat%d",j,i));
       h_rsq[j][i] = new TH1F(sn, sn, r2B[i], v.at(i));
       
@@ -186,7 +200,8 @@ int main(){
   //Here the program starts
   
   //std::ifstream mfile0("list_of_files_v2.list");
-  std::ifstream mfile0("list_DM_BIS.list");
+  //std::ifstream mfile0("list_DM_BIS.list");
+  std::ifstream mfile0("list_DM_BugFixed.list");
   std::ofstream outfile("eff_table_normal_R2_0p5_MR_200_Dphi_B_2p5_New.tex");
   
   outfile << "\\begin{table}[htdp]\n\\caption{default}\n\\begin{center}\n\\begin{tabular}{|c|c|}\n\\hline\n";
@@ -224,6 +239,7 @@ int main(){
       double mr[4], rsq[4], Jet_PT[20], Jet_Eta[20], Jet_Phi[20], metCorrX[4], metCorrY[4];
       double mr_up[4], rsq_up[4], Jet_PT_up[20], Jet_Eta_up[20], Jet_Phi_up[20], metCorrX_up[4], metCorrY_up[4];
       double mr_down[4], rsq_down[4], Jet_PT_down[20], Jet_Eta_down[20], Jet_Phi_down[20], metCorrX_down[4], metCorrY_down[4];
+      double metX[4], metY[4];
       
       double pTHem1, pTHem2, etaHem1, etaHem2, phiHem1, phiHem2;
       double pTHem1_up, pTHem2_up, etaHem1_up, etaHem2_up, phiHem1_up, phiHem2_up;
@@ -321,10 +337,12 @@ int main(){
       out->SetBranchStatus("phiHem2_down",1);
       
       out->SetBranchStatus("metCorrX",1);
+      out->SetBranchStatus("metX",1);
       out->SetBranchStatus("metCorrX_up",1);
       out->SetBranchStatus("metCorrX_down",1);
 
       out->SetBranchStatus("metCorrY",1);
+      out->SetBranchStatus("metY",1);
       out->SetBranchStatus("metCorrY_up",1);
       out->SetBranchStatus("metCorrY_down",1);
 
@@ -386,10 +404,12 @@ int main(){
       out->SetBranchAddress("phiHem2_down", &phiHem2_down);
       
       out->SetBranchAddress("metCorrX", metCorrX);
+      out->SetBranchAddress("metX", metX);
       out->SetBranchAddress("metCorrX_up", metCorrX_up);
       out->SetBranchAddress("metCorrX_down", metCorrX_down);
       
       out->SetBranchAddress("metCorrY", metCorrY);
+      out->SetBranchAddress("metY", metY);
       out->SetBranchAddress("metCorrY_up", metCorrY_up);
       out->SetBranchAddress("metCorrY_down", metCorrY_down);
       
@@ -408,6 +428,9 @@ int main(){
       double N_passed_ISR_down = 0.0;
       double N_passed_JES_up = 0.0;
       double N_passed_JES_down = 0.0;
+
+      double N_passed_ISR_MonoJet = 0.0;
+      double NP_ISR_MonoJetONLY = 0.0;
       
       for(int j = 0; j < N_out; j++){
 	out->GetEntry(j);
@@ -419,23 +442,40 @@ int main(){
 	j1.SetPtEtaPhiE(pTHem1, etaHem1, phiHem1, pTHem1*cosh(etaHem1));//Hemisphere
 	j2.SetPtEtaPhiE(pTHem2, etaHem2, phiHem2, pTHem2*cosh(etaHem2));//Hemisphere
 	double Dphi = j1.DeltaPhi(j2);
+
+	double MET = sqrt(metX[2]*metX[2] + metY[2]*metY[2]);
+	if(Jet_PT[0] > 110.0 && N_Jets == 2 && MET > 550.0 && btag == 0 && box == 0 && fabs(Dphi) < 2.5){
+	  NP_ISR_MonoJetONLY += hlt_w*pu_w*ISR;
+	}
 	
 	if(mr[2] >= 200.0 && rsq[2] >= 0.5 && btag == 0 && box == 0 && fabs(Dphi) < 2.5){
 	  if(mr[2] > 200.0 && mr[2] <= 300.0 ){
 	    if(rsq[2] > 1.2)rsq[2] = 1.1;
 	    h_rsq[xs_counter][0]->Fill(rsq[2], hlt_w*scaleF*pu_w*ISR);
+	    h_met[xs_counter][0]->Fill(MET, hlt_w*scaleF*pu_w*ISR);
+	    h_njets[xs_counter][0]->Fill(N_Jets, hlt_w*scaleF*pu_w*ISR);
 	  }else if(mr[2] > 300.0 && mr[2] <= 400.0){
 	    if(rsq[2] > 1.2)rsq[2] = 1.1;
 	    h_rsq[xs_counter][1]->Fill(rsq[2], hlt_w*scaleF*pu_w*ISR);
+	    h_met[xs_counter][1]->Fill(MET, hlt_w*scaleF*pu_w*ISR);
+	    h_njets[xs_counter][1]->Fill(N_Jets, hlt_w*scaleF*pu_w*ISR);
 	  }else if(mr[2] > 400.0 && mr[2] <= 600.0){
 	    if(rsq[2] > 1.2)rsq[2] = 1.1;
 	    h_rsq[xs_counter][2]->Fill(rsq[2], hlt_w*scaleF*pu_w*ISR);
+	    h_met[xs_counter][2]->Fill(MET, hlt_w*scaleF*pu_w*ISR);
+	    h_njets[xs_counter][2]->Fill(N_Jets, hlt_w*scaleF*pu_w*ISR);
 	  }else if(mr[2] > 600.0 && mr[2] <= 3500.0){
 	    if(rsq[2] > 1.2)rsq[2] = 1.1;
 	    h_rsq[xs_counter][3]->Fill(rsq[2], hlt_w*scaleF*pu_w*ISR);
+	    h_met[xs_counter][3]->Fill(MET, hlt_w*scaleF*pu_w*ISR);
+	    h_njets[xs_counter][3]->Fill(N_Jets, hlt_w*scaleF*pu_w*ISR);
 	  }
 	  N_passed += hlt_w*pu_w;
 	  N_passed_ISR += hlt_w*pu_w*ISR;
+
+	  if(Jet_PT[0] > 110.0 && N_Jets == 2 && MET > 550.0){
+	    N_passed_ISR_MonoJet += hlt_w*pu_w*ISR;
+	  }
 	}
 	
 	//ISR UP
@@ -518,6 +558,7 @@ int main(){
       
       double sample_eff_old = N_passed/Gen_Evts;
       double sample_eff = N_passed_ISR/Gen_Evts_isr;
+      double s_eff_Mono = N_passed_ISR_MonoJet/Gen_Evts_isr;
       double sample_eff_up = N_passed_ISR_up/Gen_Evts_isrUp;
       double sample_eff_down = N_passed_ISR_down/Gen_Evts_isrDown;
       
@@ -525,8 +566,12 @@ int main(){
       std::cout << "Sample Eff: " << sample_eff*100 << "%" << std::endl;
       std::cout << "Sample Eff Up: " << sample_eff_up*100 << "%" << std::endl;
       std::cout << "Sample Eff Down: " << sample_eff_down*100 << "%" << std::endl;
+      std::cout << "Sample Eff MONOJET: " << s_eff_Mono*100 << "%" << std::endl;
       
+      std::cout << "Razor/MONOJET: " << (N_passed_ISR_MonoJet/N_passed_ISR)*100 << "%" << std::endl;
+      std::cout << "MONOJET ONLY: " <<  (NP_ISR_MonoJetONLY/Gen_Evts_isr)*100 << "%" << std::endl;
       outfile << dm_sample << " & " << sample_eff*100 << "\\%" << "\\" << "\\" << "\n";
+      //outfile << dm_sample << " & " << (N_passed_ISR_MonoJet/N_passed_ISR)*100 << "\\%" << "\\" << "\\" << "\n";
       outfile << "\\hline" << std::endl;
       
       for(int i = 0; i < 4; i++){
@@ -543,7 +588,7 @@ int main(){
 	TString s1 = data_card_name1;
 	s1 = s1+Form("_combine_rsq_cat%d.root",i+1);
 	
-	data_card_name1 = "CombineBIS/" + data_card_name1 + Form("_rsq_cat%d.txt",i+1);
+	data_card_name1 = "CombineBIS_AN/" + data_card_name1 + Form("_rsq_cat%d.txt",i+1);
 	std::ofstream data_card_f1(data_card_name1);
 	data_card_f1 << "imax 1\njmax 4\nkmax 6\n";
 	data_card_f1 << "------------------------------------------------------------------------------------------\n";
@@ -554,18 +599,24 @@ int main(){
 	data_card_f1 << "bin\t\tb1\t\tb1\t\tb1\t\tb1\t\tb1\n";
 	data_card_f1 << "process\t\tsignal_rsq\ttt_rsq\t\tdy_rsq\t\tz_rsq\t\tw_rsq\n";
 	data_card_f1 << "process\t\t0\t\t1\t\t2\t\t3\t\t4\n";
-	data_card_f1 << "rate\t\t"<< h_rsq[xs_counter][i]->Integral() <<"\t\t"<< tt_N[i] <<"\t\t" << dy_N[i] << "\t\t" << z_N[i] << "\t\t" << w_N[i] << "\n";
+	data_card_f1 << "rate\t\t"<< h_rsq[xs_counter][i]->Integral() <<"\t\t"<< tt_N[i] <<"\t\t" << dy_N[i] << "\t" << z_N[i] << "\t\t" << w_N[i] << "\n";
 	data_card_f1 << "------------------------------------------------------------------------------------------\n";
 	data_card_f1 << "lumi\tlnN\t1.026\t\t1.0\t\t1.0\t\t1.0\t\t1.0\n";
 	//data_card_f1 << "alpha\tshape\t1\t\t-\t\t-\t\t-\t\t-\n";
 	data_card_f1 << "Isr\tshape\t1\t\t-\t\t-\t\t-\t\t-\n";
 	data_card_f1 << "Jes\tshape\t1\t\t-\t\t-\t\t-\t\t-\n";
 	data_card_f1 << "Pdf\tshape\t1\t\t-\t\t-\t\t-\t\t-\n";
-	data_card_f1 << "beta\tshape\t-\t\t1\t\t-\t\t-\t\t-\n";
-	data_card_f1 << "gamma\tshape\t-\t\t-\t\t1\t\t1\t\t1\n";
+	data_card_f1 << "beta"<<i+1<<"\tshape\t-\t\t1\t\t-\t\t-\t\t-\n";
+	data_card_f1 << "gamma"<<i+1<<"\tshape\t-\t\t-\t\t1\t\t1\t\t1\n";
+	
+	//data_card_f1 << "gamma"<<i+1<<"\tshape\t-\t\t1\t\t1\t\t1\t\t1\n";
+	
+	//data_card_f1 << "gamma"<<i+1<<"\tshape\t-\t\t-\t\t1\t\t-\t\t-\n";
+	//data_card_f1 << "epsilon"<<i+1<<"\tshape\t-\t\t-\t\t-\t\t1\t\t-\n";
+	//data_card_f1 << "delta"<<i+1<<"\tshape\t-\t\t-\t\t-\t\t-\t\t1\n";
 	data_card_f1.close();
 
-	fo = new TFile("CombineBIS/"+s1, "RECREATE");
+	fo = new TFile("CombineBIS_AN/"+s1, "RECREATE");
 	
 	data[i]->Write("data_obs");
 	
@@ -590,27 +641,36 @@ int main(){
 	h_rsq_JES_down[xs_counter][i]->Write("signal_rsq_JesDown");
 	
 	
-	//h_rsq_PDF_up[xs_counter][i]->Scale(1.02);
-	//h_rsq_PDF_down[xs_counter][i]->Scale(0.98);
 	h_rsq_PDF_up[xs_counter][i]->Write("signal_rsq_PdfUp");
 	h_rsq_PDF_down[xs_counter][i]->Write("signal_rsq_PdfDown");
 	
+	TString SysN = TString(Form("dy_rsq_gamma%dUp",i+1));
 	dy[i]->Write("dy_rsq");
-	dy_up[i]->Write("dy_rsq_gammaUp");
-	dy_down[i]->Write("dy_rsq_gammaDown");
+	dy_up[i]->Write(SysN);
+	SysN = TString(Form("dy_rsq_gamma%dDown",i+1));
+	dy_down[i]->Write(SysN);
 	
 	z[i]->Write("z_rsq");
-	z_up[i]->Write("z_rsq_gammaUp");
-	z_down[i]->Write("z_rsq_gammaDown");
+	SysN = TString(Form("z_rsq_gamma%dUp",i+1));
+	z_up[i]->Write(SysN);
+	SysN = TString(Form("z_rsq_gamma%dDown",i+1));
+	z_down[i]->Write(SysN);
+	
 
 	w[i]->Write("w_rsq");
-	w_up[i]->Write("w_rsq_gammaUp");
-	w_down[i]->Write("w_rsq_gammaDown");
+	SysN = TString(Form("w_rsq_gamma%dUp",i+1));
+	w_up[i]->Write(SysN);
+	SysN = TString(Form("w_rsq_gamma%dDown",i+1));
+	w_down[i]->Write(SysN);
 	
 	tt[i]->Write("tt_rsq");
-	tt_up[i]->Write("tt_rsq_betaUp");
-	tt_down[i]->Write("tt_rsq_betaDown");
-
+	SysN = TString(Form("tt_rsq_beta%dUp",i+1));
+	//SysN = TString(Form("tt_rsq_gamma%dUp",i+1));
+	tt_up[i]->Write(SysN);
+	SysN = TString(Form("tt_rsq_beta%dDown",i+1));
+	//SysN = TString(Form("tt_rsq_gamma%dDown",i+1));
+	tt_down[i]->Write(SysN);
+	
 	bkg[i]->Write("Pred");
 	fo->Close();
 	
@@ -627,6 +687,14 @@ int main(){
   mfile0.close();
   outfile << "\\end{tabular}\n\\end{center}\n\\label{default}\n\\end{table}\n";
   outfile.close();
-  
+
+  TFile* f4 = new TFile("SIGNAL_MET_NJETS.root", "RECREATE");
+  for(int j = 0; j < 24; j++){
+    for(int i = 0; i < 4; i++){
+      h_met[j][i]->Write();
+      h_njets[j][i]->Write();
+    }
+  }
+  f4->Close();
   return 0;
 }
